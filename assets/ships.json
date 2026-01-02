@@ -1,0 +1,180 @@
+[
+    {
+        "shipId": 110,
+        "farming": [
+            {
+                "equipId": 13,
+                "level": 12,
+                "remodel": true
+            }
+        ]
+    },
+    {
+        "shipId": 120,
+        "name": "Mikuma",
+        "farming": [
+            {
+                "equipId": 50,
+                "level": 30,
+                "remodel": true
+            }
+        ]
+    },
+    {
+        "shipId": 123,
+        "name": "Kinugasa",
+        "farming": [
+            {
+                "equipId": 50,
+                "level": 55,
+                "remodel": true
+            }
+        ]
+    },
+    {
+        "shipId": 460,
+        "name": "Hayashimo",
+        "farming": [
+            {
+                "equipId": 101,
+                "level": 30,
+                "remodel": true
+            },
+            {
+                "equipId": 88,
+                "level": 30,
+                "remodel": true
+            }
+        ]
+    },
+    {
+        "shipId": 414,
+        "name": "Kiyoshimo",
+        "farming": [
+            {
+                "equipId": 88,
+                "level": 30,
+                "remodel": true
+            },
+            {
+                "equipId": 106,
+                "level": 30,
+                "remodel": true
+            }
+        ]
+    },
+    {
+        "shipId": 453,
+        "name": "Kazagumo",
+        "farming": [
+            {
+                "equipId": 129,
+                "level": 30,
+                "remodel": true
+            }
+        ]
+    },
+    {
+        "shipId": 424,
+        "name": "Takanami",
+        "farming": [
+            {
+                "equipId": 129,
+                "level": 30,
+                "remodel": true
+            }
+        ]
+    },
+    {
+        "shipId": 183,
+        "name": "Ooyodo",
+        "farming": [
+            {
+                "equipId": 101,
+                "level": 35,
+                "remodel": true
+            },
+            {
+                "equipId": 106,
+                "level": 35,
+                "remodel": true
+            }
+        ]
+    },
+    {
+        "shipId": 90,
+        "name": "Souryuu",
+        "farming": [
+            {
+                "equipId": 100,
+                "level": 78,
+                "remodel": true
+            }
+        ]
+    },
+    {
+        "shipId": 91,
+        "name": "Hiryuu",
+        "farming": [
+            {
+                "equipId": 94,
+                "level": 77,
+                "remodel": true
+            }
+        ]
+    },
+    {
+        "shipId": 24,
+        "name": "Ooi",
+        "farming": [
+            {
+                "equipId": 58,
+                "level": 10,
+                "remodel": true
+            },
+            {
+                "equipId": 15,
+                "level": 50,
+                "remodel": true
+            }
+        ]
+    },
+    {
+        "shipId": 25,
+        "name": "Kitakami",
+        "farming": [
+            {
+                "equipId": 58,
+                "level": 10,
+                "remodel": true
+            },
+            {
+                "equipId": 15,
+                "level": 50,
+                "remodel": true
+            }
+        ]
+    },
+    {
+        "shipId": 19,
+        "name": "Kiso",
+        "farming": [
+            {
+                "equipId": 15,
+                "level": 65,
+                "remodel": true
+            }
+        ]
+    },
+    {
+        "shipId": 409,
+        "name": "Maruyu",
+        "farming": [
+            {
+                "equipId": 32,
+                "level": 20,
+                "remodel": true
+            }
+        ]
+    }
+]
