@@ -84,41 +84,66 @@ class FarmingAssistant extends Component {
         })
     })
 
-    const equipmentList = Object.values(equipmentMap)
+        const equipmentList = Object.values(equipmentMap)
 
     return (
       <div className="farming-assistant-root" style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '0 10px' }}>
-         {/* Native Flex Layout for Scrolling */}
-        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-            <Tabs id="farming-tabs" onChange={this.handleTabChange} selectedTabId={this.state.activeTab} animate={true} renderActiveTabPanelOnly={true} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <Tab id="equipment" title="Equipments" panel={
-                    <div style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                        <EquipmentList 
-                            equipments={equipmentList} 
-                            targets={targets} 
-                            onAdd={addTarget} 
-                            onRemove={removeTarget}
-                            userEquips={userEquips}
-                            userShips={userShips}
-                            farmingMap={farmingMap}
-                            $equipTypes={$equipTypes}
-                            $ships={$ships}
-                        />
-                    </div>
-                } />
-                <Tab id="ships" title="Ships" panel={
-                     <div style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                        <ShipList 
-                            equipmentList={equipmentList} 
-                            targets={targets} 
-                            $ships={$ships}
-                        />
-                    </div>
-                } />
-            </Tabs>
-        </div>
-      </div>
-    )
+         <style>{`
+            .farming-tabs {
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+            }
+            .farming-tabs .bp3-tab-list {
+                flex-shrink: 0;
+            }
+            .farming-tabs .bp3-tab-panel {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+                margin-top: 10px; 
+                overflow: hidden;
+                position: relative; /* Anchor for absolute child */
+            }
+        `}</style>
+        <div style={{ flex: 1, minHeight: 0 }}>
+            <Tabs 
+                id="farming-tabs" 
+                className="farming-tabs"
+                onChange={this.handleTabChange} 
+                selectedTabId={this.state.activeTab} 
+                animate={true} 
+                renderActiveTabPanelOnly={true}
+            >
+                        <Tab id="equipment" title="Equipments" panel={
+                            <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                                <EquipmentList 
+                                    equipments={equipmentList} 
+                                    targets={targets} 
+                                    onAdd={addTarget} 
+                                    onRemove={removeTarget}
+                                    userEquips={userEquips}
+                                    userShips={userShips}
+                                    farmingMap={farmingMap}
+                                    $equipTypes={$equipTypes}
+                                    $ships={$ships}
+                                />
+                            </div>
+                        } />
+                        <Tab id="ships" title="Ships" panel={
+                            <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                                <ShipList 
+                                    equipmentList={equipmentList} 
+                                    targets={targets} 
+                                    $ships={$ships}
+                                />
+                            </div>
+                        } />
+                    </Tabs>
+                </div>
+            </div>
+        )
   }
 }
 

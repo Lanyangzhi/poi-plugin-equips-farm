@@ -98,28 +98,15 @@ export function getFarmingMap(wctf) {
 
         // Add items to Root
         providerData.stock.forEach(eqId => {
-            // Deduplication? 
-            // If multiple forms provide same item (e.g. Kai and Kai Ni):
-            // We want to show the earliest availability (Lowest Level).
+            // No Deduplication: Show ALL forms that provide the item.
+            // This ensures intermediate forms (like Tan Yang) appear in the Ship List
+            // even if they provide the same equipment as an earlier form.
             
-            const existing = map[rootId].provides.find(p => p.equipId === eqId)
-            
-            if (existing) {
-                // If new provider is lower level, replace/update?
-                // Or keep both? Keeping both is informative but might clutter.
-                // Let's keep the one with LOWER level requirement.
-                if (providerData.level < existing.level) {
-                   existing.level = providerData.level
-                   existing.providerId = providerId
-                }
-            } else {
-                map[rootId].provides.push({
-                    equipId: eqId,
-                    providerId: providerId,
-                    level: providerData.level,
-                    // We assume 'remodel.level' of Provider is the correct Acquisition Level
-                })
-            }
+            map[rootId].provides.push({
+                equipId: eqId,
+                providerId: providerId,
+                level: providerData.level,
+            })
         })
     })
 

@@ -186,10 +186,14 @@ export default class EquipmentList extends Component {
                                                      <NumericInput 
                                                         min={0} 
                                                         max={99} 
-                                                        value={targetCount} 
-                                                        onValueChange={(val) => val <= 0 ? onRemove(eq.id) : onAdd(eq.id, val)}
-                                                        style={{ width: 60 }}
-                                                        buttonPosition="none"
+                                                        stepSize={1}
+                                                        minorStepSize={null}
+                                                        value={parseInt(targetCount || 0)} 
+                                                        onValueChange={(vNum) => {
+                                                            const val = isNaN(vNum) ? 0 : vNum
+                                                            return val <= 0 ? onRemove(eq.id) : onAdd(eq.id, val)
+                                                        }}
+                                                        style={{ width: 70 }}
                                                     />
                                                 </div>
                                             </div>
