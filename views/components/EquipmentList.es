@@ -97,12 +97,11 @@ export default class EquipmentList extends Component {
 
                     {/* Type Filter Grid */}
                     <div className="type-filter-grid" style={{ 
-                        display: 'flex', 
-                        flexWrap: 'wrap', 
+                        display: 'grid', 
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(60px, 1fr))', // Auto grid
                         gap: '8px',
-                        padding: '10px', 
-                        background: 'rgba(33, 33, 33, 0.3)', 
-                        borderRadius: '4px',
+                        padding: '10px 0', // Remove horizontal padding if bg is gone
+                        // background: 'rgba(33, 33, 33, 0.3)', // Removed
                         maxHeight: '150px', 
                         overflowY: 'auto',
                         marginBottom: '10px'
@@ -118,20 +117,22 @@ export default class EquipmentList extends Component {
                                         display: 'flex', 
                                         alignItems: 'center', 
                                         cursor: 'pointer',
-                                        opacity: isSelected ? 1 : 0.7
+                                        opacity: isSelected ? 1 : 0.6,
+                                        justifyContent: 'flex-start' // Align left in grid cell
                                     }}
                                 >
                                     {/* Custom Checkbox Look */}
                                     <div style={{
-                                        width: '16px',
-                                        height: '16px',
-                                        border: '1px solid #aaa',
+                                        width: '14px',
+                                        height: '14px',
+                                        border: '1px solid #888',
                                         background: isSelected ? '#2196F3' : 'transparent',
                                         marginRight: '6px',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        borderRadius: '2px'
+                                        borderRadius: '2px',
+                                        flexShrink: 0
                                     }}>
                                         {isSelected && <div style={{ width: '8px', height: '8px', background: '#fff' }} />}
                                     </div>
@@ -147,18 +148,12 @@ export default class EquipmentList extends Component {
                 <div className="list-content" style={{ flex: 1, overflowY: 'auto', paddingRight: 5 }}>
                     {sortedTypeIds.map(typeId => {
                         const groupItems = groups[typeId]
-                        const typeInfo = $equipTypes[typeId]
-                        const typeName = typeInfo ? typeInfo.api_name : 'Others'
-                        const representativeIconId = groupItems[0] ? groupItems[0].iconId : 0
-
+                        // const typeInfo = $equipTypes[typeId]
+                        // const typeName = typeInfo ? typeInfo.api_name : 'Others'
+                        
                         return (
-                            <div key={typeId} className="type-group" style={{ marginBottom: 20 }}>
-                                { /* Header - Only show if NO filter is active? Or always? User asked to "preserve layout". Let's keep headers. */ }
-                                <div className="group-header" style={{ display: 'flex', alignItems: 'center', marginBottom: 8, paddingBottom: 4, borderBottom: '2px solid #eee', color: '#5C7080' }}>
-                                    <SlotitemIcon slotitemId={representativeIconId} style={{ width: 20, height: 20, marginRight: 8 }} />
-                                    <h5 style={{ margin: 0, fontSize: '1.1em' }}>{typeName}</h5>
-                                    <Tag round={true} minimal={true} style={{ marginLeft: 'auto' }}>{groupItems.length}</Tag>
-                                </div>
+                            <div key={typeId} className="type-group" style={{ marginBottom: 0 }}>
+                                {/* Header Removed per user request */}
                                 
                                 {groupItems.map(eq => {
                                     const targetCount = targets[eq.id] || 0
@@ -169,6 +164,7 @@ export default class EquipmentList extends Component {
                                     return (
                                         <Card key={eq.id} elevation={0} style={{ marginBottom: 8, border: '1px solid #ddd', padding: 8 }}>
                                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+
                                                  <div 
                                                     style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', flex: 1 }} 
                                                     onClick={() => this.handleToggleExpand(eq.id)}
