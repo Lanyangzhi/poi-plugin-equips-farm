@@ -93,7 +93,7 @@ export default class ShipList extends Component {
                                         <div key={idx} style={{ 
                                             marginBottom: 4, 
                                             padding: '4px 8px', 
-                                            background: item.isTarget ? '#e3f2fd' : '#f9f9f9',
+                                            background: item.isTarget ? 'rgba(16, 107, 163, 0.25)' : 'rgba(0, 0, 0, 0.15)',
                                             borderRadius: 4,
                                             borderLeft: item.isTarget ? '3px solid #106ba3' : '3px solid transparent',
                                             display: 'flex',

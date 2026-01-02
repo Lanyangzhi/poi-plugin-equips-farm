@@ -199,7 +199,14 @@ export default class EquipmentList extends Component {
                                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                                                         {eq.ships.map((s, idx) => {
                                                             return (
-                                                                <div key={idx} style={{ display: 'flex', alignItems: 'center', background: '#f5f8fa', padding: '4px 8px', borderRadius: '4px' }}>
+                                                                <div key={idx} style={{ 
+                                                                    display: 'flex', 
+                                                                    alignItems: 'center', 
+                                                                    background: 'rgba(0, 0, 0, 0.2)', 
+                                                                    padding: '4px 8px', 
+                                                                    borderRadius: '4px',
+                                                                    border: '1px solid rgba(255, 255, 255, 0.1)'
+                                                                }}>
                                                                     <Avatar mstId={s.providerId} height={20} style={{ marginRight: 5 }} />
                                                                     <div style={{ fontSize: '0.9em' }}>
                                                                         <span>{s.providerName}</span>

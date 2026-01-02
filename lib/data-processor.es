@@ -15,6 +15,18 @@ export function getFarmingMap(wctf) {
 
     // 1st Pass: Identify direct providers (Who comes with what stock eq)
     // Map<ShipId, { level, stock: [] }>
+    
+    // Pre-Pass: Build Level Requirements Map (Child -> Level to reach from Parent)
+    const levelMap = {}
+    Object.keys(ships).forEach(sId => {
+        const ship = ships[sId]
+        if (ship.remodel && ship.remodel.next && ship.remodel.next_lvl) {
+             const nextId = parseInt(ship.remodel.next) // Target ID
+             const nextLvl = parseInt(ship.remodel.next_lvl)
+             levelMap[nextId] = nextLvl
+        }
+    })
+
     const directProvision = {} 
 
     Object.keys(ships).forEach(sId => {
@@ -36,14 +48,14 @@ export function getFarmingMap(wctf) {
         })
 
         if (myStock.length > 0) {
-            // Get the level required to BECOME this ship (remodel level)
-            // If it's a base ship, this is typically undefined or null -> treat as 1
-            const remodelLevel = (ship.remodel && ship.remodel.level) ? ship.remodel.level : 1
+            // Get the level required to BECOME this ship
+            const pId = parseInt(sId)
+            const requiredLevel = levelMap[pId] || 1 // Default to 1 if no parent req (Base)
             
-            directProvision[sId] = {
-                shipId: parseInt(sId),
+            directProvision[pId] = {
+                shipId: pId,
                 stock: myStock,
-                level: remodelLevel
+                level: requiredLevel
             }
         }
     })

@@ -78,6 +78,9 @@ class FarmingAssistant extends Component {
                  level: p.level, 
                  remodel: true
              })
+             
+             // Sort by Level Ascending (Low -> High)
+             equipmentMap[equipId].ships.sort((a, b) => a.level - b.level)
         })
     })
 
@@ -88,7 +91,7 @@ class FarmingAssistant extends Component {
          {/* Native Flex Layout for Scrolling */}
         <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
             <Tabs id="farming-tabs" onChange={this.handleTabChange} selectedTabId={this.state.activeTab} animate={true} renderActiveTabPanelOnly={true} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <Tab id="equipment" title="Equipments" className="bp3-tab-panel-scrollable" panel={
+                <Tab id="equipment" title="Equipments" panel={
                     <div style={{ height: '100%' }}>
                         <EquipmentList 
                             equipments={equipmentList} 
@@ -103,7 +106,7 @@ class FarmingAssistant extends Component {
                         />
                     </div>
                 } />
-                <Tab id="ships" title="Ships" className="bp3-tab-panel-scrollable" panel={
+                <Tab id="ships" title="Ships" panel={
                      <div style={{ height: '100%' }}>
                         <ShipList 
                             equipmentList={equipmentList} 
