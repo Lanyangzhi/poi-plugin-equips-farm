@@ -3,6 +3,7 @@ export const REMOVE_TARGET = '@@poi-plugin-farming-assistant/REMOVE_TARGET'
 export const SYNC_CONFIG = '@@poi-plugin-farming-assistant/SYNC_CONFIG'
 
 export function addTarget(equipmentId, quota = 1) {
+  console.log('[Action] addTarget called with equipmentId:', equipmentId, 'quota:', quota)
   return {
     type: ADD_TARGET,
     equipmentId,

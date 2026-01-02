@@ -2,19 +2,26 @@ import { createSelector } from 'reselect'
 import { extensionSelectorFactory } from 'views/utils/selectors'
 import { wctfSelector } from 'views/utils/selectors' // POI provides this if available, otherwise we use state.wctf
 
-const EXTENSION_KEY = 'poi-plugin-farming-assistant'
+const EXTENSION_KEY = 'poi-plugin-equips-farm'
 
-// Plugin State
-export const farmingStateSelector = createSelector(
-  extensionSelectorFactory(EXTENSION_KEY),
-  (state) => state || {}
-)
+// Plugin State - Direct access with POI's _ wrapper
+export const farmingStateSelector = (state) => {
+  const extState = (state.ext && state.ext[EXTENSION_KEY]) || {}
+  // POI wraps reducer state in a '_' key
+  const pluginState = extState._ || extState || {}
+  console.log('[Selector] farmingStateSelector - ext state:', extState)
+  console.log('[Selector] farmingStateSelector - plugin state:', pluginState)
+  return pluginState
+}
 
 // Targets is now an Object: { [equipId]: quotaCount }
-// We assume migration happens in reducer/middleware or we handle it here.
 export const targetsSelector = createSelector(
   farmingStateSelector,
-  (state) => state.targets || {} 
+  (state) => {
+    const targets = state.targets || {}
+    console.log('[Selector] targetsSelector - farming state:', state, 'targets:', targets)
+    return targets
+  }
 )
 
 // POI Master Data Selectors (Const)

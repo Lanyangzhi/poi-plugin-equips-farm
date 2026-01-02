@@ -1,7 +1,5 @@
-import { observe, observer } from 'redux-observers'
-import { store } from 'views/create-store'
 import { syncConfig } from './redux/actions'
-import { targetsSelector, wctfDataSelector, userEquipsSelector, userShipsSelector } from './redux/selectors' // Needed for logic
+import { targetsSelector, wctfDataSelector, userEquipsSelector, userShipsSelector } from './redux/selectors'
 import { getFarmingMap, checkQuota } from './lib/data-processor'
 
 // Export Redux Reducer
@@ -10,7 +8,7 @@ export { reducer } from './redux'
 // Export UI
 export { reactClass } from './views'
 
-const EXTENSION_KEY = 'poi-plugin-farming-assistant'
+const EXTENSION_KEY = 'poi-plugin-equips-farm'
 
 // Config Observer
 let unsubscribeObserver = null
@@ -30,15 +28,14 @@ const handleGameResponse = (e) => {
       gotShipId = body.api_ship_id 
   }
 
-  if (gotShipId > 0) {
-      const state = store.getState()
-      const targets = targetsSelector(state) // Object { [id]: count }
+  if (gotShipId > 0 && window.store) {
+      const state = window.store.getState()
+      const targets = targetsSelector(state)
       const wctf = wctfDataSelector(state)
       const userEquips = userEquipsSelector(state)
       const userShips = userShipsSelector(state)
-      const { $equipments } = state.const || {} // For Names
+      const { $equipments } = state.const || {}
 
-      // 1. Get Farming Map (WCTF)
       const farmingMap = getFarmingMap(wctf)
       const shipInfo = farmingMap[gotShipId]
 
@@ -48,17 +45,7 @@ const handleGameResponse = (e) => {
           shipInfo.provides.forEach(p => {
               const targetCount = targets[p.equipId] || 0
               if (targetCount > 0) {
-                  // Check Quota
                   const quota = checkQuota(targetCount, p.equipId, userEquips, userShips, farmingMap)
-                  
-                  // Trigger if NOT satisfied yet. 
-                  // Wait, "checkQuota" calculates CURRENT status (including existing inventory).
-                  // If current < target, we NEED more. So this drop is useful.
-                  // If current >= target, we don't need more?
-                  // NOTE: "current" calculation in checkQuota INCLUDES potential from existing ships in fleet.
-                  // It does NOT include THIS newly dropped ship (because it's just dropped, maybe not synced to info.ships yet).
-                  // So if (current < target), then THIS drop is vital.
-                  // If (current >= target), then we have enough.
                   
                   if (!quota.isSatisfied) {
                        const eqName = ($equipments && $equipments[p.equipId]) ? $equipments[p.equipId].api_name : '#' + p.equipId
@@ -75,19 +62,53 @@ const handleGameResponse = (e) => {
 }
 
 export function pluginDidLoad() {
+  console.log('[Plugin] Loading Farming Assistant...')
+  console.log('[Plugin] window.store available:', !!window.store)
+  console.log('[Plugin] window.config available:', !!window.config)
+  
   const savedTargets = window.config.get(configPath, {})
-  store.dispatch(syncConfig(savedTargets))
+  console.log('[Plugin] Loaded saved targets from config:', savedTargets)
+  
+  if (window.store) {
+      // First, dispatch the saved config to initialize state
+      window.store.dispatch(syncConfig(savedTargets))
+      console.log('[Plugin] Dispatched syncConfig with saved targets')
+      
+      // Check initial state after dispatch
+      setTimeout(() => {
+          const initialState = window.store.getState()
+          console.log('[Plugin] Full Redux state after init:', initialState)
+          console.log('[Plugin] Extension state:', initialState.ext)
+          console.log('[Plugin] Plugin state:', initialState.ext && initialState.ext[EXTENSION_KEY])
+      }, 100)
 
-  unsubscribeObserver = observe(store, [
-    observer(
-      (state) => targetsSelector(state),
-      (dispatch, current) => {
-        window.config.set(configPath, current)
-      }
-    ),
-  ])
+      // Use store.subscribe for persistence with proper comparison
+      let currentTargetsJson = JSON.stringify(savedTargets)
+      
+      unsubscribeObserver = window.store.subscribe(() => {
+          try {
+              const state = window.store.getState()
+              const newTargets = targetsSelector(state)
+              const newTargetsJson = JSON.stringify(newTargets)
+              
+              // Only save if targets actually changed (deep comparison via JSON)
+              if (newTargetsJson !== currentTargetsJson) {
+                  console.log('[Plugin] Targets changed from', currentTargetsJson, 'to', newTargetsJson)
+                  window.config.set(configPath, newTargets)
+                  currentTargetsJson = newTargetsJson
+              }
+          } catch (error) {
+              console.error('[Plugin] Error in store subscription:', error)
+          }
+      })
+      
+      console.log('[Plugin] Config observer installed')
+  } else {
+      console.error('[Plugin] window.store not available!')
+  }
 
   window.addEventListener('game.response', handleGameResponse)
+  console.log('[Plugin] Farming Assistant loaded successfully')
 }
 
 export function pluginWillUnload() {

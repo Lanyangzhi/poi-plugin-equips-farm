@@ -1,8 +1,48 @@
-import React, { Component } from 'react'
-import { Card, Button, InputGroup, Tag, Collapse, Divider, NumericInput, Classes } from '@blueprintjs/core'
+import React, { Component, useState, useEffect } from 'react'
+import { Card, Button, InputGroup, Tag, Collapse, Divider, NumericInput, Classes, ControlGroup } from '@blueprintjs/core'
 import { Avatar } from 'views/components/etc/avatar' 
 import { SlotitemIcon } from 'views/components/etc/icon'
 import { checkQuota } from '../../lib/data-processor'
+
+// Robust Control for Redux-bound Inputs
+const TargetControl = ({ id, count, onUpdate }) => {
+    const [val, setVal] = useState(String(count || 0))
+
+    useEffect(() => {
+        setVal(String(count || 0))
+    }, [count])
+
+    const handleConfirm = (newValStr) => {
+        let finalVal = parseInt(newValStr)
+        if (isNaN(finalVal) || finalVal < 0) finalVal = 0
+        setVal(String(finalVal))
+        console.log('[TargetControl] Updating equipment', id, 'to count', finalVal)
+        onUpdate(id, finalVal)
+    }
+
+    return (
+        <ControlGroup style={{ marginLeft: 10 }}>
+            <Button 
+                icon="minus" 
+                onClick={() => handleConfirm(String((parseInt(val) || 0) - 1))} 
+                disabled={(parseInt(val) || 0) <= 0}
+            />
+            <InputGroup 
+                value={val}
+                onChange={(e) => setVal(e.target.value)}
+                onBlur={(e) => handleConfirm(e.target.value)}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleConfirm(e.currentTarget.value)
+                }}
+                style={{ width: 50, textAlign: 'center', zIndex: 0 }}
+            />
+            <Button 
+                icon="plus" 
+                onClick={() => handleConfirm(String((parseInt(val) || 0) + 1))} 
+            />
+        </ControlGroup>
+    )
+}
 
 export default class EquipmentList extends Component {
     constructor(props) {
@@ -183,17 +223,13 @@ export default class EquipmentList extends Component {
                                                             </div>
                                                         </div>
                                                     )}
-                                                     <NumericInput 
-                                                        min={0} 
-                                                        max={99} 
-                                                        stepSize={1}
-                                                        minorStepSize={null}
-                                                        value={parseInt(targetCount || 0)} 
-                                                        onValueChange={(vNum) => {
-                                                            const val = isNaN(vNum) ? 0 : vNum
-                                                            return val <= 0 ? onRemove(eq.id) : onAdd(eq.id, val)
+                                                     <TargetControl 
+                                                        id={parseInt(eq.id)} 
+                                                        count={targetCount}
+                                                        onUpdate={(id, c) => {
+                                                            if (c <= 0) onRemove(id)
+                                                            else onAdd(id, c)
                                                         }}
-                                                        style={{ width: 70 }}
                                                     />
                                                 </div>
                                             </div>

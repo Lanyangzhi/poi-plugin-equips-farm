@@ -11,19 +11,22 @@ export function reducer(state = initialState, action) {
     case ADD_TARGET:
       // If adding existing, update quota
       // Default quota 1 if not specified
+      console.log('[Reducer] ADD_TARGET - equipmentId:', equipmentId, 'quota:', quota, 'current state:', state.targets)
+      const newTargets = {
+          ...state.targets,
+          [equipmentId]: quota || (state.targets[equipmentId] ? state.targets[equipmentId] + 1 : 1)
+      }
+      console.log('[Reducer] ADD_TARGET - new targets:', newTargets)
       return {
         ...state,
-        targets: {
-            ...state.targets,
-            [equipmentId]: quota || (state.targets[equipmentId] ? state.targets[equipmentId] + 1 : 1)
-        }
+        targets: newTargets
       }
     case REMOVE_TARGET:
-      const newTargets = { ...state.targets }
-      delete newTargets[equipmentId]
+      const updatedTargets = { ...state.targets }
+      delete updatedTargets[equipmentId]
       return {
         ...state,
-        targets: newTargets,
+        targets: updatedTargets,
       }
     case SYNC_CONFIG:
         // Migration logic: If array (old config), convert to object
