@@ -53,6 +53,11 @@ export default class ShipList extends Component {
 
         let ships = Object.values(shipMap)
 
+        // Sort items per ship by Level Ascending
+        ships.forEach(ship => {
+            ship.items.sort((a, b) => a.level - b.level)
+        })
+
         ships = ships.filter(s => {
             if (search && !s.name.includes(search)) return false
             if (filterMarked && !s.hasActiveTarget) return false
@@ -83,7 +88,7 @@ export default class ShipList extends Component {
                 <div className="list-content" style={{ flex: 1, overflowY: 'auto', paddingRight: 5 }}>
                     {ships.map(ship => (
                         <Card key={ship.baseId} elevation={1} style={{ marginBottom: 8, padding: 10 }}>
-                             <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+                             <div style={{ display: 'flex', alignItems: 'center' }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginRight: 15, width: 130 }}>
                                     <Avatar mstId={ship.baseId} height={30} />
                                     <div style={{ fontWeight: 'bold', marginTop: 5, textAlign: 'center', fontSize: '1.1em' }}>{ship.name}</div>

@@ -92,7 +92,7 @@ class FarmingAssistant extends Component {
         <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
             <Tabs id="farming-tabs" onChange={this.handleTabChange} selectedTabId={this.state.activeTab} animate={true} renderActiveTabPanelOnly={true} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <Tab id="equipment" title="Equipments" panel={
-                    <div style={{ height: '100%' }}>
+                    <div style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                         <EquipmentList 
                             equipments={equipmentList} 
                             targets={targets} 
@@ -107,7 +107,7 @@ class FarmingAssistant extends Component {
                     </div>
                 } />
                 <Tab id="ships" title="Ships" panel={
-                     <div style={{ height: '100%' }}>
+                     <div style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                         <ShipList 
                             equipmentList={equipmentList} 
                             targets={targets} 
