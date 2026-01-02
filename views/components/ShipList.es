@@ -1,139 +1,114 @@
 import React, { Component } from 'react'
-import { Card, Button, InputGroup, Tag, Collapse, Divider } from '@blueprintjs/core'
-import { getShipIconUrl } from '../../lib/utils' // Keep for backup?
+import { Card, Button, InputGroup, Tag, Collapse } from '@blueprintjs/core'
 import { Avatar } from 'views/components/etc/avatar'
-
-const FilterBtn = ({ active, label, onClick }) => (
-    <Button 
-        active={active} 
-        minimal={!active} 
-        intent={active ? "primary" : "none"} 
-        onClick={onClick} 
-        small={true}
-        style={{ marginRight: 5, marginBottom: 5 }}
-    >
-        {label}
-    </Button>
-)
 
 export default class ShipList extends Component {
     constructor(props) {
         super(props)
         this.state = {
-            shipTypeFilter: 'All', // All, DD, CL, etc. (Need to extract available types)
-            statusFilter: 'All', // All, Marked (Active), Unmarked
             search: '',
+            filterMarked: false
         }
     }
 
     render() {
-        // Need to reverse the Equipment-centric view to Ship-centric view
-        // But simpler: The props passed in could be "All Ships that are in farming list"
-        // Let's assume parent passes a processed ship list or we process it here.
-        // Actually, `views/index.es` should probably prepare a "Ship List" from the "Equipment List" or we do it here.
-        // Let's do it here to keep index clean.
+        // Consolidated Data passed from index.es (via equipmentList construction)
+        // Or we reconstruct it here?
+        // Let's rely on logic similar to index.es: 
+        // equipmentList contains: { ships: [ { shipId (Base), providerId, providerName, level, ... } ] }
         
-        const { equipmentList, targets } = this.props
-        const { shipTypeFilter, statusFilter, search } = this.state
+        const { equipmentList, targets, $ships } = this.props
+        const { search, filterMarked } = this.state
 
-        // 1. Flatten to Ship Map: ShipId -> { name, type, farming: [ {equip, level, isTarget} ] }
         const shipMap = {}
-        const availableTypes = new Set(['All'])
-
+        
         equipmentList.forEach(eq => {
             const targetCount = targets[eq.id] || 0
             const isTarget = targetCount > 0
             
             eq.ships.forEach(s => {
+                // s.shipId is BASE ID
                 if (!shipMap[s.shipId]) {
+                    // Ideally shipName is already passed, but we can lookup
                     shipMap[s.shipId] = {
-                        id: s.shipId,
+                        baseId: s.shipId,
                         name: s.shipName,
-                        type: s.shipType,
                         items: [],
                         hasActiveTarget: false
                     }
-                    availableTypes.add(s.shipType)
                 }
+
                 shipMap[s.shipId].items.push({
                     equipName: eq.name,
                     equipId: eq.id,
-                    level: s.level,
+                    level: s.level, 
                     isTarget: isTarget,
-                    quota: targetCount // Optional: show quota in tag?
+                    providerName: s.providerName,
+                    providerId: s.providerId
                 })
-                if (isTarget) {
-                    shipMap[s.shipId].hasActiveTarget = true
-                }
+
+                if (isTarget) shipMap[s.shipId].hasActiveTarget = true
             })
         })
 
         let ships = Object.values(shipMap)
 
-        // 2. Filter
         ships = ships.filter(s => {
-            // Search
             if (search && !s.name.includes(search)) return false
-            
-            // Type
-            if (shipTypeFilter !== 'All' && s.type !== shipTypeFilter) return false
-
-            // Status
-            if (statusFilter === 'Marked' && !s.hasActiveTarget) return false
-            if (statusFilter === 'Unmarked' && s.hasActiveTarget) return false
-
+            if (filterMarked && !s.hasActiveTarget) return false
             return true
         })
-        
-        // Sort by ID is usually fine, or Type
-        ships.sort((a,b) => a.id - b.id)
 
-        // Generate Type Buttons
-        const typeButtons = Array.from(availableTypes).sort().map(t => (
-            <FilterBtn key={t} active={shipTypeFilter === t} label={t} onClick={() => this.setState({ shipTypeFilter: t })} />
-        ))
+        ships.sort((a,b) => a.baseId - b.baseId)
 
         return (
-            <div className="ship-list-container" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-                <div className="filters" style={{ marginBottom: 10, flexShrink: 0 }}>
+            <div className="ship-list-container" style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+                 <div className="filters" style={{ marginBottom: 10, display: 'flex', gap: 10, flexShrink: 0, padding: 2 }}>
                      <InputGroup 
                         leftIcon="search" 
                         placeholder="Search ship..." 
                         value={search}
                         onChange={(e) => this.setState({ search: e.target.value })}
-                        style={{ marginBottom: 10 }}
+                        fill={true}
                     />
-                    <div style={{ marginBottom: 5 }}>
-                        <span style={{ marginRight: 10, fontWeight: 'bold' }}>Status:</span>
-                        <FilterBtn active={statusFilter === 'All'} label="All" onClick={() => this.setState({ statusFilter: 'All' })} />
-                        <FilterBtn active={statusFilter === 'Marked'} label="Marked" onClick={() => this.setState({ statusFilter: 'Marked' })} />
-                        <FilterBtn active={statusFilter === 'Unmarked'} label="Unmarked" onClick={() => this.setState({ statusFilter: 'Unmarked' })} />
-                    </div>
-                    <div>
-                         <span style={{ marginRight: 10, fontWeight: 'bold' }}>Type:</span>
-                         {typeButtons}
-                    </div>
+                     <Button 
+                        active={filterMarked} 
+                        intent={filterMarked ? "primary" : "none"}
+                        onClick={() => this.setState({ filterMarked: !filterMarked })}
+                    >
+                        Marked Only
+                    </Button>
                 </div>
 
                 <div className="list-content" style={{ flex: 1, overflowY: 'auto', paddingRight: 5 }}>
                     {ships.map(ship => (
-                        <Card key={ship.id} elevation={1} style={{ marginBottom: 8, padding: 10 }}>
-                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <Avatar mstId={ship.id} height={30} style={{ marginRight: 10, minWidth: 120 }} />
+                        <Card key={ship.baseId} elevation={1} style={{ marginBottom: 8, padding: 10 }}>
+                             <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginRight: 15, width: 130 }}>
+                                    <Avatar mstId={ship.baseId} height={30} />
+                                    <div style={{ fontWeight: 'bold', marginTop: 5, textAlign: 'center', fontSize: '1.1em' }}>{ship.name}</div>
+                                </div>
                                 <div style={{ flex: 1 }}>
-                                    <div style={{ fontWeight: 'bold' }}>{ship.name} <small className="bp3-text-muted">({ship.type})</small></div>
-                                    <div style={{ marginTop: 5 }}>
-                                        {ship.items.map((item, idx) => (
-                                            <Tag 
-                                                key={idx} 
-                                                intent={item.isTarget ? "success" : "none"} 
-                                                minimal={!item.isTarget}
-                                                style={{ marginRight: 5, marginBottom: 2 }}
-                                            >
-                                                {item.equipName} (Lv.{item.level})
-                                            </Tag>
-                                        ))}
-                                    </div>
+                                    {ship.items.map((item, idx) => (
+                                        <div key={idx} style={{ 
+                                            marginBottom: 4, 
+                                            padding: '4px 8px', 
+                                            background: item.isTarget ? '#e3f2fd' : '#f9f9f9',
+                                            borderRadius: 4,
+                                            borderLeft: item.isTarget ? '3px solid #106ba3' : '3px solid transparent',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center'
+                                        }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                <span style={{ fontWeight: '600' }}>{item.equipName}</span>
+                                                <span className="bp3-text-muted" style={{ fontSize: '0.85em' }}>
+                                                     via {item.providerName}
+                                                </span>
+                                            </div>
+                                            <Tag minimal={true} className={item.isTarget ? "bp3-intent-primary" : ""}>Lv.{item.level}</Tag>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         </Card>

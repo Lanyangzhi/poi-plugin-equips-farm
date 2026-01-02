@@ -4,7 +4,6 @@ import { Tab, Tabs } from '@blueprintjs/core'
 import { addTarget, removeTarget } from '../redux/actions'
 import { targetsSelector, masterShipsSelector, masterEquipmentsSelector, masterShipTypesSelector, masterEquipTypesSelector, wctfDataSelector, userEquipsSelector, userShipsSelector, constSelector } from '../redux/selectors'
 import { getFarmingMap } from '../lib/data-processor'
-import { prepareFarmingData } from '../lib/utils' // Old utils, likely replace with data-processor usage
 
 import EquipmentList from './components/EquipmentList'
 import ShipList from './components/ShipList'
@@ -28,7 +27,7 @@ class FarmingAssistant extends Component {
         addTarget, 
         removeTarget,
         $ships,
-        $equipments,
+        $equipments, 
         $shipTypes,
         $equipTypes,
         wctf,
@@ -36,37 +35,19 @@ class FarmingAssistant extends Component {
         userShips
     } = this.props
     
-    // DEBUG: Master Data Availability
-    console.log('FarmingAssistant Render State:', { 
-        targetsCount: Object.keys(targets).length,
-        shipsCount: Object.keys($ships || {}).length, 
-        equipCount: Object.keys($equipments || {}).length,
-        constKeys: Object.keys(this.props.const || {}), // Log top level keys
-        wctfReady: !!wctf && !!wctf.ships
-    })
-
-    // 1. Generate Farming Map from WCTF (Dynamic)
-    // If wctf is empty (loading), farmingMap will be empty.
+    // 1. Generate Farming Map from WCTF (Consolidated by Base ID)
     const farmingMap = getFarmingMap(wctf)
     
-    // 2. Convert Map to List for UI (Need a helper for this)
-    // We can reuse the logic from `utils.prepareFarmingData` but adapted for the WCTF structure.
-    
-    // Generating equipmentList from farmingMap
+    // 2. Convert Map to List for UI
     const equipmentMap = {}
 
-    // Iterate all ships in farming map
-    Object.keys(farmingMap).forEach(shipIdStr => {
-        const shipId = parseInt(shipIdStr)
-        const info = farmingMap[shipIdStr]
-        const masterShip = $ships[shipId] || $ships[shipIdStr] || {}
+    Object.keys(farmingMap).forEach(baseShipIdStr => {
+        const baseShipId = parseInt(baseShipIdStr)
+        const info = farmingMap[baseShipIdStr]
         
-        // Debug: Log if masterShip name is missing but ID is valid
-        if (Object.keys(masterShip).length === 0 && shipId > 0) {
-             console.warn(`FarmingAssistant: Ship ${shipId} not found in $ships`, { keys: Object.keys($ships).slice(0, 5) })
-        }
-        
-        const shipTypeName = ($shipTypes[masterShip.api_stype] || {}).api_name || '??'
+        // Name Fix: Lookup Base Ship Name
+        const baseShipMaster = $ships[baseShipId] || {}
+        const baseShipName = baseShipMaster.api_name || `Ship#${baseShipId}`
 
         info.provides.forEach(p => {
              const equipId = p.equipId
@@ -84,55 +65,55 @@ class FarmingAssistant extends Component {
                      ships: []
                  }
              }
+             
+             // Get Provider (Evolution) Name
+             const providerMaster = $ships[p.providerId] || {}
+             const providerName = providerMaster.api_name || `Form#${p.providerId}`
 
              equipmentMap[equipId].ships.push({
-                 shipId: parseInt(shipId),
-                 shipName: info.name,
-                 shipType: shipTypeName,
-                 level: p.level,
-                 remodel: p.remodelDepth > 0 // If depth > 0, it means it needs remodel
+                 shipId: baseShipId, // Use BASE ID for grouping
+                 shipName: baseShipName,
+                 providerId: p.providerId,
+                 providerName: providerName,
+                 level: p.level, 
+                 remodel: true
              })
         })
     })
 
     const equipmentList = Object.values(equipmentMap)
 
-     return (
-      <div className="farming-assistant" style={{ padding: '0 15px', height: '100%', display: 'flex', flexDirection: 'column' }}>
-        <style>{`
-            .farming-assistant .bp3-tabs {
-                display: flex;
-                flex-direction: column;
-                height: 100%;
-            }
-            .farming-assistant .bp3-tab-list {
-                flex-shrink: 0;
-            }
-            .farming-assistant .bp3-tab-panel {
-                flex: 1;
-                overflow: hidden; /* Let child scroll */
-                margin-top: 10px;
-            }
-        `}</style>
-        <Tabs id="farming-tabs" onChange={this.handleTabChange} selectedTabId={this.state.activeTab} animate={true}>
-            <Tab id="equipment" title="Equipments" panel={
-                <EquipmentList 
-                    equipments={equipmentList} 
-                    targets={targets} 
-                    onAdd={addTarget} 
-                    onRemove={removeTarget}
-                    userEquips={userEquips}
-                    userShips={userShips}
-                    farmingMap={farmingMap}
-                />
-            } />
-            <Tab id="ships" title="Ships" panel={
-                <ShipList 
-                    equipmentList={equipmentList} 
-                    targets={targets} 
-                />
-            } />
-        </Tabs>
+    return (
+      <div className="farming-assistant-root" style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '0 10px' }}>
+         {/* Native Flex Layout for Scrolling */}
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+            <Tabs id="farming-tabs" onChange={this.handleTabChange} selectedTabId={this.state.activeTab} animate={true} renderActiveTabPanelOnly={true} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Tab id="equipment" title="Equipments" className="bp3-tab-panel-scrollable" panel={
+                    <div style={{ height: '100%' }}>
+                        <EquipmentList 
+                            equipments={equipmentList} 
+                            targets={targets} 
+                            onAdd={addTarget} 
+                            onRemove={removeTarget}
+                            userEquips={userEquips}
+                            userShips={userShips}
+                            farmingMap={farmingMap}
+                            $equipTypes={$equipTypes}
+                            $ships={$ships}
+                        />
+                    </div>
+                } />
+                <Tab id="ships" title="Ships" className="bp3-tab-panel-scrollable" panel={
+                     <div style={{ height: '100%' }}>
+                        <ShipList 
+                            equipmentList={equipmentList} 
+                            targets={targets} 
+                            $ships={$ships}
+                        />
+                    </div>
+                } />
+            </Tabs>
+        </div>
       </div>
     )
   }
@@ -140,7 +121,7 @@ class FarmingAssistant extends Component {
 
 export const reactClass = connect(
   (state) => ({
-    const: constSelector(state), // For Debug
+    const: constSelector(state), 
     targets: targetsSelector(state),
     $ships: masterShipsSelector(state),
     $equipments: masterEquipmentsSelector(state),
