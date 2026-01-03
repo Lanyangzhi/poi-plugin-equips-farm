@@ -16,7 +16,6 @@ const TargetControl = ({ id, count, onUpdate }) => {
         let finalVal = parseInt(newValStr)
         if (isNaN(finalVal) || finalVal < 0) finalVal = 0
         setVal(String(finalVal))
-        console.log('[TargetControl] Updating equipment', id, 'to count', finalVal)
         onUpdate(id, finalVal)
     }
 

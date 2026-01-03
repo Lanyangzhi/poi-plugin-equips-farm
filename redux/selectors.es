@@ -9,8 +9,6 @@ export const farmingStateSelector = (state) => {
   const extState = (state.ext && state.ext[EXTENSION_KEY]) || {}
   // POI wraps reducer state in a '_' key
   const pluginState = extState._ || extState || {}
-  console.log('[Selector] farmingStateSelector - ext state:', extState)
-  console.log('[Selector] farmingStateSelector - plugin state:', pluginState)
   return pluginState
 }
 
@@ -18,9 +16,7 @@ export const farmingStateSelector = (state) => {
 export const targetsSelector = createSelector(
   farmingStateSelector,
   (state) => {
-    const targets = state.targets || {}
-    console.log('[Selector] targetsSelector - farming state:', state, 'targets:', targets)
-    return targets
+    return state.targets || {}
   }
 )
 

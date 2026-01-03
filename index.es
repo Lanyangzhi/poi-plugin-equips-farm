@@ -62,25 +62,11 @@ const handleGameResponse = (e) => {
 }
 
 export function pluginDidLoad() {
-  console.log('[Plugin] Loading Farming Assistant...')
-  console.log('[Plugin] window.store available:', !!window.store)
-  console.log('[Plugin] window.config available:', !!window.config)
-  
   const savedTargets = window.config.get(configPath, {})
-  console.log('[Plugin] Loaded saved targets from config:', savedTargets)
   
   if (window.store) {
-      // First, dispatch the saved config to initialize state
+      // Initialize state with saved config
       window.store.dispatch(syncConfig(savedTargets))
-      console.log('[Plugin] Dispatched syncConfig with saved targets')
-      
-      // Check initial state after dispatch
-      setTimeout(() => {
-          const initialState = window.store.getState()
-          console.log('[Plugin] Full Redux state after init:', initialState)
-          console.log('[Plugin] Extension state:', initialState.ext)
-          console.log('[Plugin] Plugin state:', initialState.ext && initialState.ext[EXTENSION_KEY])
-      }, 100)
 
       // Use store.subscribe for persistence with proper comparison
       let currentTargetsJson = JSON.stringify(savedTargets)
@@ -93,22 +79,16 @@ export function pluginDidLoad() {
               
               // Only save if targets actually changed (deep comparison via JSON)
               if (newTargetsJson !== currentTargetsJson) {
-                  console.log('[Plugin] Targets changed from', currentTargetsJson, 'to', newTargetsJson)
                   window.config.set(configPath, newTargets)
                   currentTargetsJson = newTargetsJson
               }
           } catch (error) {
-              console.error('[Plugin] Error in store subscription:', error)
+              console.error('[Farming Assistant] Error in store subscription:', error)
           }
       })
-      
-      console.log('[Plugin] Config observer installed')
-  } else {
-      console.error('[Plugin] window.store not available!')
   }
 
   window.addEventListener('game.response', handleGameResponse)
-  console.log('[Plugin] Farming Assistant loaded successfully')
 }
 
 export function pluginWillUnload() {
