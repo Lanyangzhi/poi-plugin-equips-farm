@@ -19,12 +19,6 @@ export function matchesSearch(query, nameVariants) {
     
     const normalizedQuery = normalizeString(query)
     
-    // Debug logging for Chinese search
-    if (query === '五十铃' || query === 'isuzu') {
-        console.log('[matchesSearch] Query:', query, 'Normalized:', normalizedQuery)
-        console.log('[matchesSearch] nameVariants:', nameVariants)
-    }
-    
     // Check all available name fields
     const fieldsToCheck = [
         nameVariants.api_name,           // Japanese name from game API

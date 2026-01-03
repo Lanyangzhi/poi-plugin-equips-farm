@@ -60,13 +60,17 @@ class FarmingAssistant extends Component {
                  const wctfItem = wctfItems[equipId] || {}
                  const typeId = (masterEquip.api_type && masterEquip.api_type[2]) || 0
                  
+                 // WCTF data structure: name is an object with language variants
+                 const chineseName = wctfItem.name && (wctfItem.name.zh_cn || wctfItem.name.chs || wctfItem.name.chinese)
+                 const yomiName = wctfItem.name && wctfItem.name.yomi
+                 
                  equipmentMap[equipId] = {
                      id: equipId,
                      name: masterEquip.api_name || `Equip#${equipId}`,
                      // Add fields for enhanced search
                      api_name: masterEquip.api_name,
-                     chinese_name: wctfItem.chinese_name || masterEquip.chinese_name,
-                     yomi: wctfItem.yomi,
+                     chinese_name: chineseName || masterEquip.chinese_name,
+                     yomi: yomiName,
                      filename: wctfItem.filename,
                      wiki_id: wctfItem.wiki_id,
                      iconId: (masterEquip.api_type && masterEquip.api_type[3]) || 0,

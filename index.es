@@ -1,5 +1,5 @@
 import { syncConfig } from './redux/actions'
-import { targetsSelector, wctfDataSelector, userEquipsSelector, userShipsSelector } from './redux/selectors'
+import { targetsSelector, wctfDataSelector, userEquipsSelector, userShipsSelector, masterShipsSelector, masterEquipmentsSelector } from './redux/selectors'
 import { getFarmingMap, checkQuota } from './lib/data-processor'
 
 // Export Redux Reducer
@@ -34,7 +34,8 @@ const handleGameResponse = (e) => {
       const wctf = wctfDataSelector(state)
       const userEquips = userEquipsSelector(state)
       const userShips = userShipsSelector(state)
-      const { $equipments } = state.const || {}
+      const $ships = masterShipsSelector(state)
+      const $equipments = masterEquipmentsSelector(state)
 
       const farmingMap = getFarmingMap(wctf)
       const shipInfo = farmingMap[gotShipId]
@@ -48,14 +49,21 @@ const handleGameResponse = (e) => {
                   const quota = checkQuota(targetCount, p.equipId, userEquips, userShips, farmingMap)
                   
                   if (!quota.isSatisfied) {
-                       const eqName = ($equipments && $equipments[p.equipId]) ? $equipments[p.equipId].api_name : '#' + p.equipId
+                       const equipMaster = $equipments[p.equipId]
+                       const eqName = equipMaster ? equipMaster.api_name : `#${p.equipId}`
                        hits.push(`${eqName} (Lv.${p.level})`)
                   }
               }
           })
 
           if (hits.length > 0) {
-              window.toast(`⚓ Farming Assistant: Useful Drop! Provides: [${hits.join(', ')}]`, { type: 'success' })
+              // Get ship name
+              const shipMaster = $ships[gotShipId]
+              const shipName = shipMaster ? shipMaster.api_name : `Ship#${gotShipId}`
+              
+              // Format: 🔒{ship}可获得{equip}⚙️
+              const equipList = hits.join('、')
+              window.toast(`🔒${shipName}可获得${equipList}⚙️`, { type: 'success' })
           }
       }
   }

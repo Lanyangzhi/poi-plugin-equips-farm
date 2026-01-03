@@ -37,13 +37,6 @@ export default class ShipList extends Component {
                     const masterShip = $ships[s.shipId] || {}
                     const wctfShip = wctfShips[s.shipId] || {}
                     
-                    // Debug: Check WCTF name structure
-                    if (s.shipId === 22) { // Isuzu's base ID
-                        console.log('[ShipList Debug] Ship ID 22 (Isuzu):')
-                        console.log('  wctfShip.name:', wctfShip.name)
-                        console.log('  wctfShip full:', wctfShip)
-                    }
-                    
                     // WCTF data structure: name is an object with language variants
                     const chineseName = wctfShip.name && (wctfShip.name.zh_cn || wctfShip.name.chs || wctfShip.name.chinese)
                     const yomiName = wctfShip.name && wctfShip.name.yomi
