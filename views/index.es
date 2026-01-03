@@ -40,6 +40,9 @@ class FarmingAssistant extends Component {
     
     // 2. Convert Map to List for UI
     const equipmentMap = {}
+    
+    // WCTF items data contains chinese_name
+    const wctfItems = (wctf && wctf.items) || {}
 
     Object.keys(farmingMap).forEach(baseShipIdStr => {
         const baseShipId = parseInt(baseShipIdStr)
@@ -54,11 +57,18 @@ class FarmingAssistant extends Component {
              
              if (!equipmentMap[equipId]) {
                  const masterEquip = $equipments[equipId] || {}
+                 const wctfItem = wctfItems[equipId] || {}
                  const typeId = (masterEquip.api_type && masterEquip.api_type[2]) || 0
                  
                  equipmentMap[equipId] = {
                      id: equipId,
                      name: masterEquip.api_name || `Equip#${equipId}`,
+                     // Add fields for enhanced search
+                     api_name: masterEquip.api_name,
+                     chinese_name: wctfItem.chinese_name || masterEquip.chinese_name,
+                     yomi: wctfItem.yomi,
+                     filename: wctfItem.filename,
+                     wiki_id: wctfItem.wiki_id,
                      iconId: (masterEquip.api_type && masterEquip.api_type[3]) || 0,
                      typeName: ($equipTypes[typeId] || {}).api_name || 'Unknown',
                      typeId: typeId,
@@ -128,6 +138,7 @@ class FarmingAssistant extends Component {
                                     farmingMap={farmingMap}
                                     $equipTypes={$equipTypes}
                                     $ships={$ships}
+                                    wctf={wctf}
                                 />
                             </div>
                         } />
@@ -137,6 +148,7 @@ class FarmingAssistant extends Component {
                                     equipmentList={equipmentList} 
                                     targets={targets} 
                                     $ships={$ships}
+                                    wctf={wctf}
                                 />
                             </div>
                         } />

@@ -18,8 +18,11 @@ export default class ShipList extends Component {
         // Let's rely on logic similar to index.es: 
         // equipmentList contains: { ships: [ { shipId (Base), providerId, providerName, level, ... } ] }
         
-        const { equipmentList, targets, $ships } = this.props
+        const { equipmentList, targets, $ships, wctf } = this.props
         const { search, filterMarked } = this.state
+
+        // WCTF ships data contains chinese_name
+        const wctfShips = (wctf && wctf.ships) || {}
 
         const shipMap = {}
         
@@ -32,17 +35,29 @@ export default class ShipList extends Component {
                 if (!shipMap[s.shipId]) {
                     // Get full ship data from master data for enhanced search
                     const masterShip = $ships[s.shipId] || {}
+                    const wctfShip = wctfShips[s.shipId] || {}
+                    
+                    // Debug: Check WCTF name structure
+                    if (s.shipId === 22) { // Isuzu's base ID
+                        console.log('[ShipList Debug] Ship ID 22 (Isuzu):')
+                        console.log('  wctfShip.name:', wctfShip.name)
+                        console.log('  wctfShip full:', wctfShip)
+                    }
+                    
+                    // WCTF data structure: name is an object with language variants
+                    const chineseName = wctfShip.name && (wctfShip.name.zh_cn || wctfShip.name.chs || wctfShip.name.chinese)
+                    const yomiName = wctfShip.name && wctfShip.name.yomi
                     
                     shipMap[s.shipId] = {
                         baseId: s.shipId,
                         name: s.shipName,
                         // Add fields for enhanced search
                         api_name: masterShip.api_name,
-                        chinese_name: masterShip.chinese_name,
-                        yomi: masterShip.yomi,
+                        chinese_name: chineseName || masterShip.chinese_name,
+                        yomi: yomiName || masterShip.yomi,
                         api_yomi: masterShip.api_yomi,
-                        filename: masterShip.filename,
-                        wiki_id: masterShip.wiki_id,
+                        filename: wctfShip.filename || masterShip.filename,
+                        wiki_id: wctfShip.wiki_id || masterShip.wiki_id,
                         items: [],
                         hasActiveTarget: false
                     }
