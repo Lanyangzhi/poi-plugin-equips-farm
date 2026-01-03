@@ -1,26 +1,37 @@
 {
   "name": "poi-plugin-equips-farm",
-  "version": "1.0.0",
-  "description": "Assist players in farming ships for specific equipment.",
+  "version": "4.2.1",
+  "description": "A POI plugin to assist players in farming ships for specific equipment with enhanced multi-language search support",
   "main": "index.es",
   "poiPlugin": {
     "title": "Farming Assistant",
-    "priority": 100,
-    "i18nDir": "./i18n"
+    "description": "Track and farm equipment from ship remodels",
+    "icon": "fa/wrench",
+    "priority": 100
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Lanyangzhi/poi-plugin-equips-farm.git"
+  },
+  "keywords": [
+    "poi",
+    "poi-plugin",
+    "kancolle",
+    "kantai-collection",
+    "equipment",
+    "farming",
+    "remodel"
+  ],
+  "author": "Lanyangzhi",
   "license": "MIT",
   "dependencies": {
     "prop-types": "^15.7.2",
     "classnames": "^2.3.1",
     "@blueprintjs/core": "^3.51.3",
     "react-bootstrap": "^0.32.4",
-    "redux-observers": "^2.1.0",
-    "react-i18next": "^9.0.10",
-    "i18next": "^19.0.0",
     "semver": "^7.3.5"
   },
   "peerDependencies": {
