@@ -3,6 +3,7 @@ import { Card, Button, InputGroup, Tag, Collapse, Divider, NumericInput, Classes
 import { Avatar } from 'views/components/etc/avatar' 
 import { SlotitemIcon } from 'views/components/etc/icon'
 import { checkQuota } from '../../lib/data-processor'
+import { matchesSearch } from '../../lib/search-utils'
 
 // Robust Control for Redux-bound Inputs
 const TargetControl = ({ id, count, onUpdate }) => {
@@ -80,7 +81,8 @@ export default class EquipmentList extends Component {
             const isMarked = !!targets[eq.id]
             if (filterType === 'Marked' && !isMarked) return false
             if (filterType === 'Unmarked' && isMarked) return false
-            if (search && !eq.name.includes(search)) return false
+            // Enhanced multi-language search: supports Chinese, Japanese, Pinyin, Romaji
+            if (search && !matchesSearch(search, eq)) return false
             return true
         })
 

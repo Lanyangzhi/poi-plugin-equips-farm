@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { Card, Button, InputGroup, Tag, Collapse } from '@blueprintjs/core'
 import { Avatar } from 'views/components/etc/avatar'
+import { matchesSearch } from '../../lib/search-utils'
 
 export default class ShipList extends Component {
     constructor(props) {
@@ -29,10 +30,19 @@ export default class ShipList extends Component {
             eq.ships.forEach(s => {
                 // s.shipId is BASE ID
                 if (!shipMap[s.shipId]) {
-                    // Ideally shipName is already passed, but we can lookup
+                    // Get full ship data from master data for enhanced search
+                    const masterShip = $ships[s.shipId] || {}
+                    
                     shipMap[s.shipId] = {
                         baseId: s.shipId,
                         name: s.shipName,
+                        // Add fields for enhanced search
+                        api_name: masterShip.api_name,
+                        chinese_name: masterShip.chinese_name,
+                        yomi: masterShip.yomi,
+                        api_yomi: masterShip.api_yomi,
+                        filename: masterShip.filename,
+                        wiki_id: masterShip.wiki_id,
                         items: [],
                         hasActiveTarget: false
                     }
@@ -59,7 +69,8 @@ export default class ShipList extends Component {
         })
 
         ships = ships.filter(s => {
-            if (search && !s.name.includes(search)) return false
+            // Enhanced multi-language search: supports Chinese, Japanese, Pinyin, Romaji
+            if (search && !matchesSearch(search, s)) return false
             if (filterMarked && !s.hasActiveTarget) return false
             return true
         })
