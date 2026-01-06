@@ -9,6 +9,14 @@
     "icon": "fa/wrench",
     "priority": 100
   },
+  "files": [
+    "index.es",
+    "lib",
+    "views",
+    "redux",
+    "assets",
+    "initial_equip_ships.json"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
