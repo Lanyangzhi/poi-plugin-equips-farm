@@ -29,6 +29,7 @@ test/
 !redux/
 !views/
 scripts/
+.github/
 
 
 #忽略资源文件
