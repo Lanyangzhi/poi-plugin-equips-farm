@@ -28,3 +28,8 @@ test/
 !lib/
 !redux/
 !views/
+scripts/
+
+
+#忽略资源文件
+.RESAUSE/

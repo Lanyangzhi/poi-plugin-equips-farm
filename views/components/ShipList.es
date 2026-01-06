@@ -41,9 +41,12 @@ export default class ShipList extends Component {
                     const chineseName = wctfShip.name && (wctfShip.name.zh_cn || wctfShip.name.chs || wctfShip.name.chinese)
                     const yomiName = wctfShip.name && wctfShip.name.yomi
                     
+                    // Fallback for names if WCTF is missing (e.g. for Initial only ships if they somehow aren't in WCTF index but exist in $ships)
+                    const displayName = s.shipName || masterShip.api_name || chineseName
+                    
                     shipMap[s.shipId] = {
                         baseId: s.shipId,
-                        name: s.shipName,
+                        name: displayName,
                         // Add fields for enhanced search
                         api_name: masterShip.api_name,
                         chinese_name: chineseName || masterShip.chinese_name,
@@ -51,6 +54,10 @@ export default class ShipList extends Component {
                         api_yomi: masterShip.api_yomi,
                         filename: wctfShip.filename || masterShip.filename,
                         wiki_id: wctfShip.wiki_id || masterShip.wiki_id,
+                        
+                        // IMPORTANT: ensure we have something to search against if WCTF is missing
+                        // This handles cases where we matched by ID but WCTF data might be sparse
+                        _rawName: s.shipName, 
                         items: [],
                         hasActiveTarget: false
                     }
@@ -62,7 +69,8 @@ export default class ShipList extends Component {
                     level: s.level, 
                     isTarget: isTarget,
                     providerName: s.providerName,
-                    providerId: s.providerId
+                    providerId: s.providerId,
+                    isInitial: s.isInitial
                 })
 
                 if (isTarget) shipMap[s.shipId].hasActiveTarget = true
@@ -127,9 +135,10 @@ export default class ShipList extends Component {
                                             <div style={{ display: 'flex', flexDirection: 'column' }}>
                                                 <span style={{ fontWeight: '600' }}>{item.equipName}</span>
                                                 <span className="bp3-text-muted" style={{ fontSize: '0.85em' }}>
-                                                     via {item.providerName}
+                                                     {item.isInitial ? 'Initial' : 'via ' + item.providerName}
                                                 </span>
                                             </div>
+                                            {item.isInitial && <Tag minimal={true} intent="success" style={{marginRight: 5}}>Init</Tag>}
                                             <Tag minimal={true} className={item.isTarget ? "bp3-intent-primary" : ""}>Lv.{item.level}</Tag>
                                         </div>
                                     ))}

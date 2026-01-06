@@ -3,12 +3,28 @@
 
 let cachedFarmingMap = null
 let cachedWctfShips = null
+let cachedMasterShips = null
+let cachedParentMap = {} // Cache for parent lookups
+
+// Helper: Find Base Ancestor (Module Level)
+const findRoot = (id) => {
+    let curr = id
+    let steps = 0
+    while(cachedParentMap[curr] && steps < 20) {
+        curr = cachedParentMap[curr]
+        steps++
+    }
+    return curr
+}
+
+
+
 
 // --- 1. WCTF Processing ---
 
-export function getFarmingMap(wctf) {
+export function getFarmingMap(wctf, $ships) {
     if (!wctf || !wctf.ships) return {}
-    if (cachedFarmingMap && cachedWctfShips === wctf.ships) return cachedFarmingMap
+    if (cachedFarmingMap && cachedWctfShips === wctf.ships && cachedMasterShips === $ships) return cachedFarmingMap
 
     const map = {}
     const ships = wctf.ships
@@ -69,6 +85,39 @@ export function getFarmingMap(wctf) {
         }
     })
 
+    // 2.1 Pass: Supplement Parent Map from Master Data (Block 2 & Runtime)
+    // Master Data links Forward (api_aftershipid), so we reverse it to get Child -> Parent
+    const processMasterForParents = (source) => {
+        if (!source) return
+        Object.values(source).forEach(s => {
+            const afterId = parseInt(s.api_aftershipid)
+            const currentId = s.api_id
+            
+            // If this ship remodels into something valid
+            if (afterId > 0) {
+                // If the target (afterId) doesn't have a known parent yet, record this connection
+                // This links "Next Form" back to "Current Form"
+                if (!parentMap[afterId]) {
+                    parentMap[afterId] = currentId
+                }
+            }
+        })
+    }
+
+    // Load Master Cache if not already loaded (Optimization: Reuse if loaded later? No, needed here for findRoot)
+    // We need to move the cache loading up or do it twice.
+    // Let's load it once at the top of function for consistency.
+    let masterCache = { ships: {} }
+    try {
+        const { loadMasterCache } = require('./master-cache')
+        masterCache = loadMasterCache() || { ships: {} }
+    } catch (e) {
+        // console.warn ...
+    }
+
+    processMasterForParents(masterCache.ships)
+    processMasterForParents($ships)
+
     // Helper: Find Base Ancestor
     const findRoot = (id) => {
         let curr = id
@@ -110,8 +159,95 @@ export function getFarmingMap(wctf) {
         })
     })
 
+    // 4th Pass: Merge External Initial Equipment Data (from Akashi-list)
+    try {
+        // Master Cache already loaded above
+
+        const initialEquipData = require('../initial_equip_ships.json')
+        if (initialEquipData) {
+            Object.keys(initialEquipData).forEach(eqIdStr => {
+                const eqId = parseInt(eqIdStr, 10)
+                const providers = initialEquipData[eqIdStr]
+                
+                
+
+                
+                providers.forEach(p => {
+                    // p has { name, level }
+                    
+                    let foundId = -1;
+                    
+                    // Priority 1: Check WCTF (Block 1) - Best for multilingual support
+                    for (const sId in ships) {
+                        const s = ships[sId];
+                        const names = s.name || {};
+                        if (
+                            names.ja_jp === p.name || 
+                            names.zh_cn === p.name || 
+                            names.japanese === p.name ||
+                            (s.api_name && s.api_name === p.name)
+                        ) {
+                            foundId = parseInt(sId);
+                            break;
+                        }
+                    }
+
+                    // Priority 2: Check Master Cache (Block 2) - For new ships via stored cache
+                    if (foundId === -1 && masterCache && masterCache.ships) {
+                         Object.values(masterCache.ships).forEach(ms => {
+                             if (ms.api_name === p.name) {
+                                  foundId = ms.api_id
+                             }
+                         })
+                    }
+
+                    // Priority 3: Check Runtime Master Data ($ships) - For immediate validation if passed
+                    if (foundId === -1 && $ships) {
+                         Object.values($ships).forEach(ms => {
+                             if (ms.api_name === p.name) {
+                                  foundId = ms.api_id
+                             }
+                         })
+                    }
+                    
+                    if (foundId > 0) {
+                        // Ensure foundId is treated as a valid ship even if not in wctf.ships
+                        // Effectively "mounting" the ID.
+                        const rootId = findRoot(foundId) || foundId // Fallback to self if no root found
+                        
+                        if (!map[rootId]) {
+                            map[rootId] = {
+                                baseId: rootId,
+                                provides: []
+                            }
+                        }
+                        
+                        // Check for duplicates
+                        const exists = map[rootId].provides.some(existing => 
+                            existing.equipId === eqId && 
+                            existing.providerId === foundId && 
+                            existing.level === p.level
+                        )
+                        
+                        if (!exists) {
+                            map[rootId].provides.push({
+                                equipId: eqId,
+                                providerId: foundId,
+                                level: p.level,
+                                isInitial: true
+                            })
+                        }
+                    }
+                })
+            })
+        }
+    } catch (e) {
+        console.error("Failed to load initial_equip_ships.json", e)
+    }
+
     cachedFarmingMap = map
     cachedWctfShips = wctf.ships
+    cachedMasterShips = $ships
     return map
 }
 
@@ -132,26 +268,19 @@ export function checkQuota(targetCount, equipId, userEquips, userShips, farmingM
     Object.values(userShips).forEach(ship => {
         const masterId = ship.api_ship_id
         
-        // farmingMap is Keyed by BASE ID.
-        // If masterId is in farmingMap, it is a Base ship match.
-        // What if masterId is an intermediate form (e.g. Kai), but not yet Provider (Kai Ni)?
-        // Our farmingMap keys are ROOTS. 
-        // We need to know if `masterId` belongs to the tree of a Root that provides `equipId`.
+        // Use findRoot to handle merged ships (e.g. Eidsvold Kai -> Eidsvold)
+        // If we don't do this, we won't find the entry in farmingMap which is keyed by Root ID.
+        const rootId = findRoot(masterId)
         
-        // Simplification for v4: 
-        // We check if `masterId` matches the 'baseId' of a group.
-        // (This assumes we keep Base copies. If we have intermediate, this check might fail.)
-        // Ideally we check: findRoot(masterId) -> match map Key.
-        // But `wctf` is needed for findRoot. We closed over it? No.
+        const info = farmingMap[rootId] || farmingMap[masterId] // Try Root first, then direct (fallback)
         
-        // Let's rely on the fact that most farming involves keeping Base ships.
-        // Or, we can do a quick lookup if we exported the parentMap or findRoot logic.
-        // For now, strict Base ID match is "Safe" (undercounts rather than overcounts).
-        
-        const info = farmingMap[masterId]
         if (info && info.provides) {
+             // Check if this ship (or its family) provides the target equip
+             // And specifically, if the form I have is NOT the one that provides it (or I have multiple forms)
+             // Simplified Logic: If I have a ship in this family, count it as potential.
+             // Refined: If I have usage for this ship family to get the equip.
+             
              const useful = info.provides.some(p => p.equipId === equipId && p.providerId !== masterId)
-             // If I have the Base, and Base != Provider, it's potential.
              if (useful) {
                  potential++
              }

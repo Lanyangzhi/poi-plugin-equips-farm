@@ -26,6 +26,14 @@ const handleGameResponse = (e) => {
       }
   } else if (path === '/kcsapi/api_req_kousyou/getship') {
       gotShipId = body.api_ship_id 
+  } else if (path === '/kcsapi/api_start2/getData') {
+      // Block 2: Save Master Data Cache
+      try {
+          const { saveMasterCache } = require('./lib/master-cache')
+          saveMasterCache(body)
+      } catch (e) {
+          console.error('[Farming Plugin] Error saving master cache', e)
+      }
   }
 
   if (gotShipId > 0 && window.store) {
@@ -36,8 +44,7 @@ const handleGameResponse = (e) => {
       const userShips = userShipsSelector(state)
       const $ships = masterShipsSelector(state)
       const $equipments = masterEquipmentsSelector(state)
-
-      const farmingMap = getFarmingMap(wctf)
+      const farmingMap = getFarmingMap(wctf, $ships)
       const shipInfo = farmingMap[gotShipId]
 
       if (shipInfo && shipInfo.provides) {
