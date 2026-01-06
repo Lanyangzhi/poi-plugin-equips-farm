@@ -44,13 +44,23 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org/
-      - run: npm publish
+      - run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "Error: NODE_AUTH_TOKEN is empty!"
+            exit 1
+          else
+            echo "NODE_AUTH_TOKEN is set (length: ${#NODE_AUTH_TOKEN})"
+          fi
+          npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
 

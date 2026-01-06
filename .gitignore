@@ -11,4 +11,5 @@ yarn-error.log*
 dist-data/
 master_cache.json
 assets/bundled_master_cache.json
+scripts/
 
