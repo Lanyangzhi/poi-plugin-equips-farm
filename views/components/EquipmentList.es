@@ -139,7 +139,7 @@ export default class EquipmentList extends Component {
                     {/* Type Filter Grid */}
                     <div className="type-filter-grid" style={{ 
                         display: 'grid', 
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(60px, 1fr))', // Auto grid
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', // Increased min width for larger icons
                         gap: '8px',
                         padding: '10px 0', // Remove horizontal padding if bg is gone
                         // background: 'rgba(33, 33, 33, 0.3)', // Removed
@@ -177,7 +177,9 @@ export default class EquipmentList extends Component {
                                     }}>
                                         {isSelected && <div style={{ width: '8px', height: '8px', background: '#fff' }} />}
                                     </div>
-                                    <SlotitemIcon slotitemId={t.iconId} style={{ width: 24, height: 24 }} />
+                                    <div className="farming-icon-wrapper" style={{ width: 48, height: 48 }}>
+                                        <SlotitemIcon slotitemId={t.iconId} />
+                                    </div>
                                 </div>
                             )
                         })}
@@ -187,6 +189,35 @@ export default class EquipmentList extends Component {
 
                 {/* List Content */}
                 <div className="list-content" style={{ flex: 1, overflowY: 'auto', paddingRight: 5 }}>
+                    <style>{`
+                        .farming-icon-wrapper {
+                            display: flex !important;
+                            align-items: center !important;
+                            justify-content: center !important;
+                            overflow: hidden !important;
+                        }
+                        /* Target immediate child (SlotitemIcon container) */
+                        .farming-icon-wrapper > span, 
+                        .farming-icon-wrapper > div,
+                        .farming-icon-wrapper > img,
+                        .farming-icon-wrapper > svg {
+                            width: 100% !important;
+                            height: 100% !important;
+                            display: flex !important;
+                            align-items: center !important;
+                            justify-content: center !important;
+                        }
+                        /* Target the actual image/svg deeply */
+                        .farming-icon-wrapper img, 
+                        .farming-icon-wrapper svg {
+                            width: 100% !important;
+                            height: 100% !important;
+                            max-width: 100% !important;
+                            max-height: 100% !important;
+                            object-fit: contain !important;
+                        }
+                    `}</style>
+
                     {sortedTypeIds.map(typeId => {
                         const groupItems = groups[typeId]
                         // const typeInfo = $equipTypes[typeId]
@@ -210,7 +241,9 @@ export default class EquipmentList extends Component {
                                                     style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', flex: 1 }} 
                                                     onClick={() => this.handleToggleExpand(eq.id)}
                                                 >
-                                                    <SlotitemIcon slotitemId={eq.iconId} style={{ marginRight: 10, width: 30, height: 30 }} />
+                                                    <div className="farming-icon-wrapper" style={{ width: 60, height: 60, marginRight: 10 }}>
+                                                        <SlotitemIcon slotitemId={eq.iconId} />
+                                                    </div>
                                                     <div style={{ lineHeight: '1.2' }}>
                                                         <div style={{ fontWeight: 'bold' }}>{eq.name}</div>
                                                     </div>

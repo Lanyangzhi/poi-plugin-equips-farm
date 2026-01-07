@@ -36,7 +36,7 @@ class FarmingAssistant extends Component {
     } = this.props
     
     // 1. Generate Farming Map from WCTF (Consolidated by Base ID)
-    const farmingMap = getFarmingMap(wctf)
+    const farmingMap = getFarmingMap(wctf, $ships)
     
     // 2. Convert Map to List for UI
     const equipmentMap = {}
