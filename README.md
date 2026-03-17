@@ -142,6 +142,9 @@ npm run extract:akashi:external -- D:\VibeCoding\akashi-list
 
 ### 更新日志
 
+#### v1.0.11
+- 🔧 在 GitHub Actions 发布流程中显式升级 npm 到最新版本，以修复 trusted publishing 场景下的 `E404` 发布失败
+
 #### v1.0.10
 - 🧪 临时简化 npm 发布 workflow，移除 provenance 参数以排查 trusted publishing 发布失败问题
 
@@ -298,6 +301,9 @@ npm run extract:akashi:external -- D:\VibeCoding\akashi-list
 ```
 
 ### Changelog
+
+#### v1.0.11
+- 🔧 Explicitly upgrade npm to the latest version in GitHub Actions to fix trusted publishing `E404` publish failures
 
 #### v1.0.10
 - 🧪 Temporarily simplified the npm publish workflow by removing the provenance flag to isolate the trusted publishing failure
