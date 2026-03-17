@@ -15,10 +15,94 @@ class FarmingAssistant extends Component {
     this.state = {
       activeTab: 'equipment',
     }
+
+    this.cachedEquipmentList = null
+    this.cachedEquipmentListInputs = null
   }
 
   handleTabChange = (newTabId) => {
       this.setState({ activeTab: newTabId })
+  }
+
+  getEquipmentList(farmingMap, $ships, $equipments, $equipTypes, wctf) {
+    const wctfItems = (wctf && wctf.items) || {}
+    const cacheInputs = {
+      farmingMap,
+      $ships,
+      $equipments,
+      $equipTypes,
+      wctfItems,
+    }
+
+    if (
+      this.cachedEquipmentList &&
+      this.cachedEquipmentListInputs &&
+      this.cachedEquipmentListInputs.farmingMap === cacheInputs.farmingMap &&
+      this.cachedEquipmentListInputs.$ships === cacheInputs.$ships &&
+      this.cachedEquipmentListInputs.$equipments === cacheInputs.$equipments &&
+      this.cachedEquipmentListInputs.$equipTypes === cacheInputs.$equipTypes &&
+      this.cachedEquipmentListInputs.wctfItems === cacheInputs.wctfItems
+    ) {
+      return this.cachedEquipmentList
+    }
+
+    const equipmentMap = {}
+
+    Object.keys(farmingMap).forEach(baseShipIdStr => {
+      const baseShipId = parseInt(baseShipIdStr, 10)
+      const info = farmingMap[baseShipIdStr]
+
+      const baseShipMaster = $ships[baseShipId] || {}
+      const baseShipName = baseShipMaster.api_name || `Ship#${baseShipId}`
+
+      info.provides.forEach(p => {
+        const equipId = p.equipId
+
+        if (!equipmentMap[equipId]) {
+          const masterEquip = $equipments[equipId] || {}
+          const wctfItem = wctfItems[equipId] || {}
+          const typeId = (masterEquip.api_type && masterEquip.api_type[2]) || 0
+          const chineseName = wctfItem.name && (wctfItem.name.zh_cn || wctfItem.name.chs || wctfItem.name.chinese)
+          const yomiName = wctfItem.name && wctfItem.name.yomi
+
+          equipmentMap[equipId] = {
+            id: equipId,
+            name: masterEquip.api_name || `Equip#${equipId}`,
+            api_name: masterEquip.api_name,
+            chinese_name: chineseName || masterEquip.chinese_name,
+            yomi: yomiName,
+            filename: wctfItem.filename,
+            wiki_id: wctfItem.wiki_id,
+            iconId: (masterEquip.api_type && masterEquip.api_type[3]) || 0,
+            typeName: ($equipTypes[typeId] || {}).api_name || 'Unknown',
+            typeId,
+            ships: []
+          }
+        }
+
+        const providerMaster = $ships[p.providerId] || {}
+        const providerName = providerMaster.api_name || `Form#${p.providerId}`
+
+        equipmentMap[equipId].ships.push({
+          shipId: baseShipId,
+          shipName: baseShipName,
+          providerId: p.providerId,
+          providerName,
+          level: p.level,
+          remodel: true,
+          isInitial: !!p.isInitial
+        })
+      })
+    })
+
+    const equipmentList = Object.values(equipmentMap)
+    equipmentList.forEach(eq => {
+      eq.ships.sort((a, b) => a.level - b.level)
+    })
+
+    this.cachedEquipmentList = equipmentList
+    this.cachedEquipmentListInputs = cacheInputs
+    return equipmentList
   }
 
   render() {
@@ -38,67 +122,7 @@ class FarmingAssistant extends Component {
     // 1. Generate Farming Map from WCTF (Consolidated by Base ID)
     const farmingMap = getFarmingMap(wctf, $ships)
     
-    // 2. Convert Map to List for UI
-    const equipmentMap = {}
-    
-    // WCTF items data contains chinese_name
-    const wctfItems = (wctf && wctf.items) || {}
-
-    Object.keys(farmingMap).forEach(baseShipIdStr => {
-        const baseShipId = parseInt(baseShipIdStr)
-        const info = farmingMap[baseShipIdStr]
-        
-        // Name Fix: Lookup Base Ship Name
-        const baseShipMaster = $ships[baseShipId] || {}
-        const baseShipName = baseShipMaster.api_name || `Ship#${baseShipId}`
-
-        info.provides.forEach(p => {
-             const equipId = p.equipId
-             
-             if (!equipmentMap[equipId]) {
-                 const masterEquip = $equipments[equipId] || {}
-                 const wctfItem = wctfItems[equipId] || {}
-                 const typeId = (masterEquip.api_type && masterEquip.api_type[2]) || 0
-                 
-                 // WCTF data structure: name is an object with language variants
-                 const chineseName = wctfItem.name && (wctfItem.name.zh_cn || wctfItem.name.chs || wctfItem.name.chinese)
-                 const yomiName = wctfItem.name && wctfItem.name.yomi
-                 
-                 equipmentMap[equipId] = {
-                     id: equipId,
-                     name: masterEquip.api_name || `Equip#${equipId}`,
-                     // Add fields for enhanced search
-                     api_name: masterEquip.api_name,
-                     chinese_name: chineseName || masterEquip.chinese_name,
-                     yomi: yomiName,
-                     filename: wctfItem.filename,
-                     wiki_id: wctfItem.wiki_id,
-                     iconId: (masterEquip.api_type && masterEquip.api_type[3]) || 0,
-                     typeName: ($equipTypes[typeId] || {}).api_name || 'Unknown',
-                     typeId: typeId,
-                     ships: []
-                 }
-             }
-             
-             // Get Provider (Evolution) Name
-             const providerMaster = $ships[p.providerId] || {}
-             const providerName = providerMaster.api_name || `Form#${p.providerId}`
-
-             equipmentMap[equipId].ships.push({
-                 shipId: baseShipId, // Use BASE ID for grouping
-                 shipName: baseShipName,
-                 providerId: p.providerId,
-                 providerName: providerName,
-                 level: p.level, 
-                 remodel: true
-             })
-             
-             // Sort by Level Ascending (Low -> High)
-             equipmentMap[equipId].ships.sort((a, b) => a.level - b.level)
-        })
-    })
-
-        const equipmentList = Object.values(equipmentMap)
+    const equipmentList = this.getEquipmentList(farmingMap, $ships, $equipments, $equipTypes, wctf)
 
     return (
       <div className="farming-assistant-root" style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '0 10px' }}>

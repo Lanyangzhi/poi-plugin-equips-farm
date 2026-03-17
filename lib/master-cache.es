@@ -3,14 +3,28 @@ const path = require('path-extra')
 
 const CACHE_DIR = path.join(window.APPDATA_PATH, 'poi-plugin-equips-farm')
 const MASTER_CACHE_FILE = path.join(CACHE_DIR, 'master_cache.json')
+const MAX_MASTER_SHIPS = 5000
+const MAX_MASTER_SHIPGRAPH = 5000
+let pendingWrite = Promise.resolve()
 
 // Ensure directory exists
 fs.ensureDirSync(CACHE_DIR)
 
 export function saveMasterCache(body) {
-    try {
-        if (!body || !body.api_mst_ship || !body.api_mst_shipgraph) return
+    if (
+        !body ||
+        !Array.isArray(body.api_mst_ship) ||
+        !Array.isArray(body.api_mst_shipgraph) ||
+        body.api_mst_ship.length === 0 ||
+        body.api_mst_shipgraph.length === 0 ||
+        body.api_mst_ship.length > MAX_MASTER_SHIPS ||
+        body.api_mst_shipgraph.length > MAX_MASTER_SHIPGRAPH
+    ) {
+        return Promise.resolve(false)
+    }
 
+    pendingWrite = pendingWrite.then(async () => {
+        try {
         const cacheData = {
             ships: {},
             shipgraph: {}
@@ -37,11 +51,16 @@ export function saveMasterCache(body) {
             }
         })
 
-        fs.writeJsonSync(MASTER_CACHE_FILE, cacheData)
+        await fs.writeJson(MASTER_CACHE_FILE, cacheData)
         console.log('[Farming Plugin] Master data cached successfully.')
+        return true
     } catch (e) {
         console.error('[Farming Plugin] Failed to save master cache:', e)
+        return false
     }
+    })
+
+    return pendingWrite
 }
 
 export function loadMasterCache() {

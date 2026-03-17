@@ -117,18 +117,7 @@ export function getFarmingMap(wctf, $ships) {
 
     processMasterForParents(masterCache.ships)
     processMasterForParents($ships)
-
-    // Helper: Find Base Ancestor
-    const findRoot = (id) => {
-        let curr = id
-        let steps = 0
-        // Walk up until no parent found
-        while(parentMap[curr] && steps < 20) {
-            curr = parentMap[curr]
-            steps++
-        }
-        return curr
-    }
+    cachedParentMap = parentMap
 
     // 3rd Pass: Group by Base Ancestor
     Object.keys(directProvision).forEach(providerIdStr => {
@@ -271,7 +260,7 @@ export function checkQuota(targetCount, equipId, userEquips, userShips, farmingM
         // Use findRoot to handle merged ships (e.g. Eidsvold Kai -> Eidsvold)
         // If we don't do this, we won't find the entry in farmingMap which is keyed by Root ID.
         const rootId = findRoot(masterId)
-        
+
         const info = farmingMap[rootId] || farmingMap[masterId] // Try Root first, then direct (fallback)
         
         if (info && info.provides) {

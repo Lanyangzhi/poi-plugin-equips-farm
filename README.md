@@ -95,7 +95,57 @@ ln -s /path/to/poi-plugin-equips-farm poi-plugin-equips-farm
 # 重启 POI 进行测试
 ```
 
+### 自动同步 Akashi 数据
+
+仓库内置了一个 GitHub Actions 工作流，用于跟踪上游 `yukikuri/akashi-list` 的提交变化，并自动刷新 `initial_equip_ships.json`。
+
+- 工作流文件：`.github/workflows/sync-akashi-data.yml`
+- 默认上游仓库：`yukikuri/akashi-list`
+- 触发方式：
+  - 定时执行
+  - GitHub Actions 页面手动执行
+- 核心逻辑：
+  - 先检查上游最新 commit hash
+  - 如果 hash 没变，直接退出
+  - 如果 hash 变了，重新生成 `initial_equip_ships.json`
+  - 如果数据内容有变化，自动升级 patch 版本、提交并打 tag
+  - tag 推送后，会触发 `.github/workflows/npm-publish.yml` 自动发布 npm
+  - 如果上游 hash 变了但数据内容没变，只记录新的 hash，不发版
+
+#### 需要的 GitHub 配置
+
+- `Secrets`
+  - `NPM_TOKEN`
+    - 用于自动执行 `npm publish`
+- `Variables`（可选）
+  - `AKASHI_REPO`
+    - 可覆盖默认上游仓库
+    - 默认值已经是 `yukikuri/akashi-list`
+    - 只有在你想切到自己的 mirror/fork 时才需要设置
+
+#### 手动执行
+
+可以在 GitHub Actions 页面手动运行 `Sync Akashi Data`。
+
+- 默认会使用 `yukikuri/akashi-list`
+- 如果需要临时切换上游仓库，可以在 `workflow_dispatch` 输入框里填写 `akashi_repo`
+
+#### 本地手动生成
+
+```bash
+# 使用仓库内置的旧路径
+npm run extract:akashi
+
+# 使用外部 akashi-list 源目录
+npm run extract:akashi:external -- D:\VibeCoding\akashi-list
+```
+
 ### 更新日志
+
+#### v1.0.9
+- 🔄 自动跟随上游（`yukikuri/akashi-list`）更新 `initial_equip_ships.json`
+- 🤖 新增 GitHub Actions 自动同步与自动发版流程
+- ⚙️ 优化 trusted publishing 配置，准备通过 GitHub Actions 自动发布 npm
 
 #### v1.0.4
 - 🏗️ **重构数据架构**: 引入 Block 1-2-3 三层数据体系，彻底解决新船数据滞后问题。
@@ -199,7 +249,57 @@ ln -s /path/to/poi-plugin-equips-farm poi-plugin-equips-farm
 # Restart POI for testing
 ```
 
+### Automatic Akashi Data Sync
+
+This repository includes a GitHub Actions workflow that tracks upstream changes from `yukikuri/akashi-list` and refreshes `initial_equip_ships.json` automatically.
+
+- Workflow file: `.github/workflows/sync-akashi-data.yml`
+- Default upstream repository: `yukikuri/akashi-list`
+- Trigger modes:
+  - Scheduled run
+  - Manual run from GitHub Actions
+- Core flow:
+  - Check the latest upstream commit hash first
+  - Exit immediately if the hash did not change
+  - Regenerate `initial_equip_ships.json` if the hash changed
+  - If the generated data changed, bump the patch version, commit, and tag
+  - The new tag then triggers `.github/workflows/npm-publish.yml` to publish to npm
+  - If upstream changed but the generated data did not, only record the new hash without publishing
+
+#### Required GitHub Setup
+
+- `Secrets`
+  - `NPM_TOKEN`
+    - Required for automatic `npm publish`
+- `Variables` (optional)
+  - `AKASHI_REPO`
+    - Overrides the default upstream repository
+    - The workflow already defaults to `yukikuri/akashi-list`
+    - Only needed if you want to switch to your own mirror or fork later
+
+#### Manual Run
+
+You can manually run `Sync Akashi Data` from the GitHub Actions page.
+
+- By default it uses `yukikuri/akashi-list`
+- If needed, you can override the source with the `akashi_repo` workflow input
+
+#### Local Generation
+
+```bash
+# Use the repository's bundled Akashi copy
+npm run extract:akashi
+
+# Use an external akashi-list source directory
+npm run extract:akashi:external -- D:\VibeCoding\akashi-list
+```
+
 ### Changelog
+
+#### v1.0.9
+- 🔄 Automatically follow upstream (`yukikuri/akashi-list`) updates for `initial_equip_ships.json`
+- 🤖 Added GitHub Actions automation for data sync and release publishing
+- ⚙️ Updated trusted publishing setup to support GitHub Actions npm releases
 
 #### v4.2.1
 - ✨ Added multi-language search support (Chinese, Japanese, Hiragana, Romaji)

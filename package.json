@@ -1,6 +1,6 @@
 {
   "name": "poi-plugin-equips-farm",
-  "version": "1.0.7",
+  "version": "1.0.9",
   "description": "A POI plugin to assist players in farming ships for specific equipment with enhanced multi-language search support",
   "main": "index.es",
   "poiPlugin": {
@@ -18,6 +18,8 @@
     "initial_equip_ships.json"
   ],
   "scripts": {
+    "extract:akashi": "node scripts/extract_akashi_data.js",
+    "extract:akashi:external": "node scripts/extract_akashi_data_from_source.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "publishConfig": {

@@ -75,6 +75,14 @@ export default class EquipmentList extends Component {
         // Props contain full equip list + master data
         const { equipments, targets, onAdd, onRemove, userEquips, userShips, farmingMap, $equipTypes, $ships } = this.props
         const { filterType, search, expandedId } = this.state
+        const quotaMap = {}
+
+        Object.keys(targets).forEach(equipId => {
+            const targetCount = targets[equipId] || 0
+            if (targetCount > 0) {
+                quotaMap[equipId] = checkQuota(targetCount, parseInt(equipId, 10), userEquips, userShips, farmingMap)
+            }
+        })
 
         // 1. Initial Filter (Search & Status)
         let filtered = equipments.filter(eq => {
@@ -231,7 +239,7 @@ export default class EquipmentList extends Component {
                                     const targetCount = targets[eq.id] || 0
                                     const isMarked = targetCount > 0
                                     const isExpanded = expandedId === eq.id
-                                    const quota = checkQuota(targetCount, eq.id, userEquips, userShips, farmingMap)
+                                    const quota = quotaMap[eq.id] || { isSatisfied: true, current: 0 }
 
                                     return (
                                         <Card key={eq.id} elevation={0} style={{ marginBottom: 8, border: '1px solid #ddd', padding: 8 }}>

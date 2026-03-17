@@ -1,0 +1,143 @@
+name: Sync Akashi Data
+
+on:
+  workflow_dispatch:
+    inputs:
+      akashi_repo:
+        description: Override Akashi source repo (owner/name)
+        required: false
+        type: string
+  schedule:
+    - cron: '17 3 * * *'
+
+jobs:
+  sync-data:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      DEFAULT_AKASHI_REPO: yukikuri/akashi-list
+      AKASHI_HASH_FILE: .github/akashi-list.last-commit
+    steps:
+      - name: Checkout plugin repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Resolve Akashi repository
+        id: akashi_repo
+        shell: bash
+        run: |
+          REPO_INPUT="${{ inputs.akashi_repo }}"
+          REPO_VAR="${{ vars.AKASHI_REPO }}"
+          REPO="${REPO_INPUT:-$REPO_VAR}"
+          REPO="${REPO:-$DEFAULT_AKASHI_REPO}"
+          if [ -z "$REPO" ]; then
+            echo "Set repository variable AKASHI_REPO or provide workflow_dispatch input akashi_repo."
+            exit 1
+          fi
+          echo "value=$REPO" >> "$GITHUB_OUTPUT"
+
+      - name: Read last synced Akashi commit
+        id: previous_hash
+        shell: bash
+        run: |
+          if [ -f "$AKASHI_HASH_FILE" ]; then
+            echo "value=$(cat "$AKASHI_HASH_FILE")" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Fetch latest Akashi commit
+        id: latest_hash
+        shell: bash
+        run: |
+          HASH="$(git ls-remote "https://github.com/${{ steps.akashi_repo.outputs.value }}.git" HEAD | awk '{print $1}')"
+          if [ -z "$HASH" ]; then
+            echo "Failed to resolve latest Akashi commit hash for ${{ steps.akashi_repo.outputs.value }}"
+            exit 1
+          fi
+          echo "value=$HASH" >> "$GITHUB_OUTPUT"
+
+      - name: Detect upstream commit changes
+        id: upstream_changes
+        shell: bash
+        run: |
+          if [ "${{ steps.previous_hash.outputs.value }}" = "${{ steps.latest_hash.outputs.value }}" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout Akashi source
+        if: steps.upstream_changes.outputs.changed == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ steps.akashi_repo.outputs.value }}
+          path: akashi-list-gh-pages
+
+      - name: Generate latest initial equipment data
+        if: steps.upstream_changes.outputs.changed == 'true'
+        run: node scripts/extract_akashi_data_from_source.js ./akashi-list-gh-pages ./initial_equip_ships.json
+
+      - name: Detect data changes
+        id: data_changes
+        if: steps.upstream_changes.outputs.changed == 'true'
+        shell: bash
+        run: |
+          if git diff --quiet -- initial_equip_ships.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update tracked Akashi commit hash
+        if: steps.upstream_changes.outputs.changed == 'true'
+        shell: bash
+        run: |
+          mkdir -p "$(dirname "$AKASHI_HASH_FILE")"
+          printf '%s\n' "${{ steps.latest_hash.outputs.value }}" > "$AKASHI_HASH_FILE"
+
+      - name: Detect metadata changes
+        id: metadata_changes
+        if: steps.upstream_changes.outputs.changed == 'true'
+        shell: bash
+        run: |
+          if git diff --quiet -- initial_equip_ships.json "$AKASHI_HASH_FILE"; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bump patch version
+        if: steps.upstream_changes.outputs.changed == 'true' && steps.data_changes.outputs.changed == 'true'
+        run: npm version patch --no-git-tag-version
+
+      - name: Commit updated data
+        if: steps.upstream_changes.outputs.changed == 'true' && steps.metadata_changes.outputs.changed == 'true'
+        shell: bash
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ "${{ steps.data_changes.outputs.changed }}" = "true" ]; then
+            git add initial_equip_ships.json package.json "$AKASHI_HASH_FILE"
+            git commit -m "chore: sync Akashi data for v${VERSION} (${{ steps.latest_hash.outputs.value }})"
+            git tag "v${VERSION}"
+          else
+            git add "$AKASHI_HASH_FILE"
+            git commit -m "chore: track Akashi upstream ${{ steps.latest_hash.outputs.value }}"
+          fi
+
+      - name: Push commit and tag
+        if: steps.upstream_changes.outputs.changed == 'true' && steps.metadata_changes.outputs.changed == 'true'
+        run: |
+          git push
+          if [ "${{ steps.data_changes.outputs.changed }}" = "true" ]; then
+            git push origin "v$(node -p "require('./package.json').version")"
+          fi

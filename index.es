@@ -9,10 +9,24 @@ export { reducer } from './redux'
 export { reactClass } from './views'
 
 const EXTENSION_KEY = 'poi-plugin-equips-farm'
+const MAX_MASTER_SHIPS = 5000
+const MAX_MASTER_SHIPGRAPH = 5000
 
 // Config Observer
 let unsubscribeObserver = null
 const configPath = `${EXTENSION_KEY}.targets`
+
+const isValidMasterCachePayload = (body) => {
+  if (!body) return false
+
+  const { api_mst_ship, api_mst_shipgraph } = body
+  if (!Array.isArray(api_mst_ship) || !Array.isArray(api_mst_shipgraph)) return false
+  if (api_mst_ship.length === 0 || api_mst_shipgraph.length === 0) return false
+  if (api_mst_ship.length > MAX_MASTER_SHIPS || api_mst_shipgraph.length > MAX_MASTER_SHIPGRAPH) return false
+
+  return api_mst_ship.every(s => s && Number.isInteger(s.api_id)) &&
+    api_mst_shipgraph.every(g => g && Number.isInteger(g.api_id))
+}
 
 // Event Handler for Game Response
 const handleGameResponse = (e) => {
@@ -28,11 +42,11 @@ const handleGameResponse = (e) => {
       gotShipId = body.api_ship_id 
   } else if (path === '/kcsapi/api_start2/getData') {
       // Block 2: Save Master Data Cache
-      try {
+      if (isValidMasterCachePayload(body)) {
           const { saveMasterCache } = require('./lib/master-cache')
-          saveMasterCache(body)
-      } catch (e) {
-          console.error('[Farming Plugin] Error saving master cache', e)
+          saveMasterCache(body).catch((error) => {
+              console.error('[Farming Plugin] Error saving master cache', error)
+          })
       }
   }
 
