@@ -142,6 +142,9 @@ npm run extract:akashi:external -- D:\VibeCoding\akashi-list
 
 ### 更新日志
 
+#### v1.0.10
+- 🧪 临时简化 npm 发布 workflow，移除 provenance 参数以排查 trusted publishing 发布失败问题
+
 #### v1.0.9
 - 🔄 自动跟随上游（`yukikuri/akashi-list`）更新 `initial_equip_ships.json`
 - 🤖 新增 GitHub Actions 自动同步与自动发版流程
@@ -295,6 +298,9 @@ npm run extract:akashi:external -- D:\VibeCoding\akashi-list
 ```
 
 ### Changelog
+
+#### v1.0.10
+- 🧪 Temporarily simplified the npm publish workflow by removing the provenance flag to isolate the trusted publishing failure
 
 #### v1.0.9
 - 🔄 Automatically follow upstream (`yukikuri/akashi-list`) updates for `initial_equip_ships.json`

@@ -55,5 +55,5 @@ jobs:
           registry-url: https://registry.npmjs.org/
       - run: node --version
       - run: npm --version
-      - run: npm publish --provenance --access public
+      - run: npm publish --access public
 
