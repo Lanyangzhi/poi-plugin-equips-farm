@@ -11,5 +11,8 @@ yarn-error.log*
 dist-data/
 master_cache.json
 assets/bundled_master_cache.json
-scripts/
+scripts/*
+!scripts/bundle_data.js
+!scripts/extract_akashi_data.js
+!scripts/extract_akashi_data_from_source.js
 
