@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
     env:
       DEFAULT_AKASHI_REPO: yukikuri/akashi-list
       AKASHI_HASH_FILE: .github/akashi-list.last-commit
@@ -141,3 +142,14 @@ jobs:
           if [ "${{ steps.data_changes.outputs.changed }}" = "true" ]; then
             git push origin "v$(node -p "require('./package.json').version")"
           fi
+
+      - name: Publish to npm
+        if: steps.upstream_changes.outputs.changed == 'true' && steps.data_changes.outputs.changed == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org/
+
+      - name: npm publish
+        if: steps.upstream_changes.outputs.changed == 'true' && steps.data_changes.outputs.changed == 'true'
+        run: npm publish --provenance --access public
