@@ -149,6 +149,9 @@ jobs:
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org/
+      - run: node --version
+      - run: npm install -g npm@latest
+      - run: npm --version
 
       - name: npm publish
         if: steps.upstream_changes.outputs.changed == 'true' && steps.data_changes.outputs.changed == 'true'
