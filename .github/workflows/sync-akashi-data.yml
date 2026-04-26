@@ -115,33 +115,32 @@ jobs:
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Bump patch version
+      - name: Set dynamic version
         if: steps.upstream_changes.outputs.changed == 'true' && steps.data_changes.outputs.changed == 'true'
-        run: npm version patch --no-git-tag-version
+        run: |
+          BASE_VERSION=$(node -p "require('./package.json').version")
+          TS=$(date +%Y%m%d%H%M%S)
+          NEW_VERSION="${BASE_VERSION}-auto.${TS}"
+          npm version $NEW_VERSION --no-git-tag-version
 
       - name: Commit updated data
         if: steps.upstream_changes.outputs.changed == 'true' && steps.metadata_changes.outputs.changed == 'true'
-        shell: bash
         run: |
           VERSION="$(node -p "require('./package.json').version")"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
           if [ "${{ steps.data_changes.outputs.changed }}" = "true" ]; then
-            git add initial_equip_ships.json package.json "$AKASHI_HASH_FILE"
-            git commit -m "chore: sync Akashi data for v${VERSION} (${{ steps.latest_hash.outputs.value }})"
-            git tag "v${VERSION}"
+            git add initial_equip_ships.json "$AKASHI_HASH_FILE"
+            git commit -m "chore: sync Akashi data (${VERSION}) (${{ steps.latest_hash.outputs.value }})"
           else
             git add "$AKASHI_HASH_FILE"
             git commit -m "chore: track Akashi upstream ${{ steps.latest_hash.outputs.value }}"
           fi
 
-      - name: Push commit and tag
+      - name: Push commit
         if: steps.upstream_changes.outputs.changed == 'true' && steps.metadata_changes.outputs.changed == 'true'
-        run: |
-          git push
-          if [ "${{ steps.data_changes.outputs.changed }}" = "true" ]; then
-            git push origin "v$(node -p "require('./package.json').version")"
-          fi
+        run: git push
 
       - name: Publish to npm
         if: steps.upstream_changes.outputs.changed == 'true' && steps.data_changes.outputs.changed == 'true'
