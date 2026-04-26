@@ -1,6 +1,6 @@
 {
   "name": "poi-plugin-equips-farm",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "A POI plugin to assist players in farming ships for specific equipment with enhanced multi-language search support",
   "main": "index.es",
   "poiPlugin": {
