@@ -15,4 +15,5 @@ scripts/*
 !scripts/bundle_data.js
 !scripts/extract_akashi_data.js
 !scripts/extract_akashi_data_from_source.js
+!scripts/test-core.js
 
