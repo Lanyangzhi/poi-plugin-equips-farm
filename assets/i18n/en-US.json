@@ -16,7 +16,7 @@
   "viaProvider": "via {{name}}",
   "initTag": "Init",
   "noDataTitle": "No equipment data detected",
-  "noDataDesc": "The list is empty, probably because data sources are not ready. Check the source status below, retry, or see the README for troubleshooting.",
+  "noDataDesc": "The list is empty, probably because data sources are not ready. Check the source status below, retry, or report bug issue.",
   "dataSource": "Data source status",
   "wctfLabel": "WCTF Database",
   "masterDataLabel": "Game master data",
@@ -33,5 +33,5 @@
   "diagnosticHint": "Hint: if the WCTF database is empty, open poi Settings -> About -> Update and click the update button for the WCTF database. If game master data is empty, make sure you are logged in with game data loaded.",
   "noMatchDesc": "No equipment matches the current filters. Clear filters or adjust your search.",
   "loadingText": "Loading data...",
-  "toastGotShip": "🔒{{shipName}} can provide {{equipList}}⚙️"
+  "toastGotShip": "🚢{{shipName}} can provide {{equipList}}🔒️"
 }

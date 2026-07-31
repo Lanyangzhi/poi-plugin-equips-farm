@@ -13,10 +13,10 @@
   "typeOthers": "其他",
   "levelPrefix": "Lv.",
   "initialLabel": "初始",
-  "viaProvider": "经由 {{name}}",
+  "viaProvider": "来自 {{name}}",
   "initTag": "初始",
   "noDataTitle": "未检测到装备数据",
-  "noDataDesc": "列表为空，可能是数据源未就绪。下方为数据源状态，可点击重试，或参考 README 排查方法。",
+  "noDataDesc": "列表为空，可能是数据源未就绪。下方为数据源状态，可点击重试，或提交反馈。",
   "dataSource": "数据源状态",
   "wctfLabel": "WCTF 数据库",
   "masterDataLabel": "游戏主数据",
@@ -33,5 +33,5 @@
   "diagnosticHint": "提示：若 WCTF 数据为空，请在 poi 的 设置 → 关于 → 更新 页面点击 WCTF 数据库的更新按钮；若游戏主数据为空，请确认已进入游戏加载数据。",
   "noMatchDesc": "当前筛选条件下没有可显示的装备，请清除筛选或调整搜索词。",
   "loadingText": "数据加载中…",
-  "toastGotShip": "🔒{{shipName}}可获得{{equipList}}⚙️"
+  "toastGotShip": "🚢{{shipName}}可获得{{equipList}}🔒️"
 }
