@@ -72,7 +72,35 @@ npm install poi-plugin-equips-farm
 
 ### 数据来源
 
-本插件使用 [WhoCallsTheFleet (WCTF)](https://github.com/TeamFleet/WhoCallsTheFleet) 数据库提供装备获取信息和多语言名称支持。
+本插件从多个数据源构建"舰娘 → 可提供装备"映射，任意数据源缺失都不会导致列表为空：
+
+| 数据源 | 说明 |
+|---|---|
+| **WCTF 数据库** | [WhoCallsTheFleet](https://github.com/TeamFleet/WhoCallsTheFleet) 数据库，由 poi 在 设置 → 关于 → 更新 页面按需安装/更新（npm 包 `whocallsthefleet-database`）。提供舰娘自带装备（改造获得）与改造链信息 |
+| **游戏主数据** | poi 的 `const.$ships`，登录并加载游戏数据后可用，提供 `api_aftershipid` 改造链与日文名称 |
+| **本地缓存** | `%APPDATA%\poi\poi-plugin-equips-farm\master_cache.json`，由游戏 `api_start2` 响应自动写入（原子写入，损坏自动清除并重建） |
+| **内置数据** | 随插件发布的 `initial_equip_ships.json`（Akashi 数据，定期自动同步），提供初始装备信息 |
+
+### 常见问题排查
+
+#### 提示 "未检测到装备数据" / 列表为空（旧版本为 "No items match filter"）
+
+列表为空说明**所有数据源都不可用**，常见原因与解决方法：
+
+1. **WCTF 数据库未加载**（最常见）
+   - 打开 poi：设置 → 关于 → 更新，点击 WCTF 数据库旁的更新按钮
+   - 若更新失败，多为网络问题，请检查到 npm registry 的连通性
+2. **游戏数据未加载**
+   - 确认已进入游戏并完成数据加载（`api_start2`），再打开插件面板
+   - 若在未登录状态打开插件，面板会显示空列表，登录后自动恢复
+3. **本地缓存损坏**
+   - 插件会自动检测并删除损坏的缓存文件，下次进入游戏时自动重建，无需手动处理
+4. **数据源状态诊断**
+   - 空列表状态下会显示"数据源状态"面板（WCTF / 游戏主数据 / 本地缓存 / 内置数据 各自的状态与数量）
+   - 点击"重新加载"按钮可强制重建数据
+   - 若问题仍存在，请截图该面板反馈给开发者，可快速定位原因
+
+> 提示：重新安装插件不会清除上述数据（它们位于 poi 的配置/数据目录中），如果重装后问题依旧，请优先检查 WCTF 数据库与游戏数据加载状态。
 
 ### 开发
 
@@ -97,20 +125,32 @@ ln -s /path/to/poi-plugin-equips-farm poi-plugin-equips-farm
 
 ### 自动同步 Akashi 数据
 
-仓库内置了一个 GitHub Actions 工作流，用于跟踪上游 `yukikuri/akashi-list` 的提交变化，并自动刷新 `initial_equip_ships.json`。
+仓库内置了一个 GitHub Actions 工作流，用于跟踪上游 `yukikuri/akashi-list` 的提交变化，自动刷新 `initial_equip_ships.json` 并发布到 npm。
 
 - 工作流文件：`.github/workflows/sync-akashi-data.yml`
 - 默认上游仓库：`yukikuri/akashi-list`
 - 触发方式：
-  - 定时执行
+  - 定时执行（每天 03:17 UTC）
   - GitHub Actions 页面手动执行
-- 核心逻辑：
-  - 先检查上游最新 commit hash
-  - 如果 hash 没变，直接退出
-  - 如果 hash 变了，重新生成 `initial_equip_ships.json`
-  - 如果数据内容有变化，自动升级 patch 版本、提交并打 tag
-  - tag 推送后，会触发 `.github/workflows/npm-publish.yml` 自动发布 npm
+- 核心逻辑（单 workflow 双 job，全链路自动完成，无需人工干预）：
+  - **job `sync-data`**：检查上游最新 commit hash → 重新生成 `initial_equip_ships.json` → **数据有效性校验**（解析出的装备条目数 ≥ 100，防止上游改版导致发布空数据）→ 数据有变化时自动 `npm version patch` → 提交（数据 + package.json + hash）→ 打 tag → push
+  - **job `publish`**（依赖 sync-data，仅数据变化时执行）：`npm test` → `npm publish --provenance`（OIDC trusted publishing，无需 token）
   - 如果上游 hash 变了但数据内容没变，只记录新的 hash，不发版
+  - `concurrency` 串行控制：定时任务与手动触发并发时不会产生重复版本号
+- 发布失败处理：在 GitHub Actions 页面直接 "Re-run failed jobs" 即可重试发布（数据与版本号已就绪）
+- 手动兜底：`.github/workflows/npm-publish.yml` 支持 `workflow_dispatch` 手动发布当前 master 版本
+
+> 注意：tag 推送（使用默认 `GITHUB_TOKEN`）不会触发其他 workflow（GitHub 递归保护），因此发布与数据同步在**同一个 workflow** 内完成，不依赖跨 workflow 触发。
+
+#### Node.js / npm 版本维护
+
+发布环境固定使用 **Node.js 24（LTS）+ npm@12**：
+
+- `actions/setup-node` 指定 `node-version: 24`（自动使用最新的 24.x，始终满足 npm@12 的 engine 要求）
+- `npm install -g npm@12` **锁定 npm 大版本**，不使用 `npm@latest`
+  - npm@latest 是滚动版本，新 major 会不断提高 engine 要求（如 npm@12 要求 node ≥ 22.22.2），导致镜像自带 node 版本不匹配（`EBADENGINE`）
+  - npm registry 永久保留所有历史版本，npm@12 的 OIDC/provenance 支持（npm ≥ 9.7 引入）长期有效
+- 如需升级 npm 大版本：先确认目标 npm 的 `engines` 要求，再同步调整 `node-version`
 
 #### 需要的 GitHub 配置
 
@@ -141,6 +181,16 @@ npm run extract:akashi:external -- D:\VibeCoding\akashi-list
 ```
 
 ### 更新日志
+
+#### v1.0.15
+- 🐛 **修复 "No items match filter" 空列表问题**: 移除对 WCTF 数据的强依赖，改为多数据源合并构建（游戏主数据 / 本地缓存 / 内置 Akashi 数据），任意数据源缺失或损坏时列表仍可用
+- 🔧 **名称匹配归一化**: 忽略大小写与空格差异（如 `Bismarck zwei` 与 `Bismarck Zwei`），支持中/日/罗马音变体
+- 💾 **本地缓存加固**: 原子写入（防止崩溃损坏）、读取校验、损坏文件自动清除并重建
+- 🩺 **诊断面板**: 列表为空时显示各数据源状态与"重新加载"按钮，便于定位问题
+- 🎛️ **筛选优化**: 空结果时提供"清除筛选"按钮；类型过滤支持一键清除
+- 🌐 **i18n 双语界面**: 支持中/英文界面（跟随 poi 语言设置），替换原有英文硬编码
+- 🐛 **修复**: 罗马音转换中长音符（ー）与促音（っ）未生效的问题
+- ✅ **新增测试**: `npm test` 覆盖数据源缺失回归、名称匹配、缓存自愈等核心逻辑
 
 #### v1.0.11
 - 🔧 在 GitHub Actions 发布流程中显式升级 npm 到最新版本，以修复 trusted publishing 场景下的 `E404` 发布失败
@@ -232,7 +282,35 @@ npm install poi-plugin-equips-farm
 
 ### Data Source
 
-This plugin uses the [WhoCallsTheFleet (WCTF)](https://github.com/TeamFleet/WhoCallsTheFleet) database for equipment acquisition information and multi-language name support.
+The plugin builds its "ship → provides equipment" map from multiple sources, so a missing source never empties the list:
+
+| Source | Description |
+|---|---|
+| **WCTF Database** | [WhoCallsTheFleet](https://github.com/TeamFleet/WhoCallsTheFleet) database, installed/updated by poi on demand on the Settings → About → Update page (npm package `whocallsthefleet-database`). Provides stock equipment (from remodels) and remodel chains |
+| **Game Master Data** | poi's `const.$ships`, available after logging in with game data loaded. Provides `api_aftershipid` remodel chains and Japanese names |
+| **Local Cache** | `%APPDATA%\poi\poi-plugin-equips-farm\master_cache.json`, written automatically from game `api_start2` responses (atomic write; corrupted files are auto-removed and rebuilt) |
+| **Bundled Data** | `initial_equip_ships.json` shipped with the plugin (Akashi data, auto-synced regularly), providing initial equipment |
+
+### Troubleshooting
+
+#### "No equipment data detected" / empty list (old versions: "No items match filter")
+
+An empty list means **all data sources are unavailable**. Common causes and fixes:
+
+1. **WCTF database not loaded** (most common)
+   - Open poi: Settings → About → Update, click the update button next to the WCTF database
+   - If the update fails, check network access to the npm registry
+2. **Game data not loaded**
+   - Make sure you are logged in with game data loaded (`api_start2`) before opening the plugin panel
+   - If the panel is opened while logged out, the list is empty and recovers automatically after login
+3. **Local cache corrupted**
+   - The plugin detects and removes corrupted cache files automatically; they are rebuilt on the next game login. No manual action needed
+4. **Data source diagnostics**
+   - When the list is empty, a "Data source status" panel shows the state and counts of WCTF / game master data / local cache / bundled data
+   - Click the "Reload" button to force a rebuild
+   - If the issue persists, screenshot this panel when reporting the bug for faster diagnosis
+
+> Note: reinstalling the plugin does NOT clear these data (they live in poi's config/data directories). If the problem survives a reinstall, check the WCTF database and game data loading first.
 
 ### Development
 
@@ -257,20 +335,32 @@ ln -s /path/to/poi-plugin-equips-farm poi-plugin-equips-farm
 
 ### Automatic Akashi Data Sync
 
-This repository includes a GitHub Actions workflow that tracks upstream changes from `yukikuri/akashi-list` and refreshes `initial_equip_ships.json` automatically.
+This repository includes a GitHub Actions workflow that tracks upstream changes from `yukikuri/akashi-list`, refreshes `initial_equip_ships.json` and publishes to npm automatically.
 
 - Workflow file: `.github/workflows/sync-akashi-data.yml`
 - Default upstream repository: `yukikuri/akashi-list`
 - Trigger modes:
-  - Scheduled run
+  - Scheduled run (every day at 03:17 UTC)
   - Manual run from GitHub Actions
-- Core flow:
-  - Check the latest upstream commit hash first
-  - Exit immediately if the hash did not change
-  - Regenerate `initial_equip_ships.json` if the hash changed
-  - If the generated data changed, bump the patch version, commit, and tag
-  - The new tag then triggers `.github/workflows/npm-publish.yml` to publish to npm
-  - If upstream changed but the generated data did not, only record the new hash without publishing
+- Core flow (single workflow, two jobs; fully automatic, no manual steps):
+  - **job `sync-data`**: check the latest upstream commit hash → regenerate `initial_equip_ships.json` → **data validation** (extracted equipment count must be >= 100, to avoid publishing empty data if the upstream HTML format changes) → auto `npm version patch` when data changed → commit (data + package.json + hash) → tag → push
+  - **job `publish`** (depends on sync-data, runs only when data changed): `npm test` → `npm publish --provenance` (OIDC trusted publishing, no token required)
+  - If upstream changed but the generated data did not, only the new hash is committed without publishing
+  - `concurrency` group serializes runs so schedule + manual dispatch can never produce duplicate versions
+- On publish failure: use "Re-run failed jobs" on the GitHub Actions page (data and version are already in place)
+- Manual fallback: `.github/workflows/npm-publish.yml` supports `workflow_dispatch` to publish the current master version
+
+> Note: tag pushes made with the default `GITHUB_TOKEN` do NOT trigger other workflows (GitHub recursion protection), so publishing happens inside the same workflow as the data sync instead of relying on cross-workflow triggers.
+
+#### Node.js / npm version policy
+
+The publish environment is pinned to **Node.js 24 (LTS) + npm@12**:
+
+- `actions/setup-node` uses `node-version: 24` (resolves to the latest 24.x, always satisfying npm@12's engine requirements)
+- `npm install -g npm@12` **pins the npm major version** instead of using `npm@latest`
+  - `npm@latest` rolls forward; new majors keep raising engine requirements (e.g. npm@12 requires node >= 22.22.2), which breaks the runner's bundled node (`EBADENGINE`)
+  - The npm registry keeps every historical version forever; npm@12's OIDC/provenance support (introduced in npm >= 9.7) is stable long-term
+- To upgrade the npm major later: first check the target npm's `engines` requirement, then adjust `node-version` accordingly
 
 #### Required GitHub Setup
 
@@ -301,6 +391,16 @@ npm run extract:akashi:external -- D:\VibeCoding\akashi-list
 ```
 
 ### Changelog
+
+#### v1.0.15
+- 🐛 **Fix "No items match filter" empty list**: removed the hard dependency on WCTF data; the map is now merged from multiple sources (game master data / local cache / bundled Akashi data), so a missing or corrupted source no longer empties the list
+- 🔧 **Normalized name matching**: case/whitespace-insensitive (e.g. `Bismarck zwei` vs `Bismarck Zwei`), with Chinese/Japanese/Romaji variants
+- 💾 **Hardened local cache**: atomic writes (crash-safe), read validation, corrupted files auto-removed and rebuilt
+- 🩺 **Diagnostics panel**: when the list is empty, each data source's status is shown with a "Reload" button for faster troubleshooting
+- 🎛️ **Filter UX**: "Clear filters" action when a filter empties the list; one-click clear for type filters
+- 🌐 **i18n bilingual UI**: Chinese/English interface (follows poi language), replacing hardcoded English strings
+- 🐛 **Fix**: long vowel mark (ー) and small tsu (っ) were not dropped in Romaji conversion
+- ✅ **Tests**: `npm test` covers the no-data regression, name matching, and cache self-healing
 
 #### v1.0.11
 - 🔧 Explicitly upgrade npm to the latest version in GitHub Actions to fix trusted publishing `E404` publish failures

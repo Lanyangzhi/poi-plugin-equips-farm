@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import { Card, Button, InputGroup, Tag, Collapse } from '@blueprintjs/core'
 import { Avatar } from 'views/components/etc/avatar'
 import { matchesSearch } from '../../lib/search-utils'
+import { t } from '../i18n'
 
 export default class ShipList extends Component {
     constructor(props) {
@@ -93,12 +94,14 @@ export default class ShipList extends Component {
 
         ships.sort((a,b) => a.baseId - b.baseId)
 
+        const noDataAtAll = equipmentList.length === 0
+
         return (
             <div className="ship-list-container" style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
                  <div className="filters" style={{ marginBottom: 10, display: 'flex', gap: 10, flexShrink: 0, padding: 2 }}>
                      <InputGroup 
                         leftIcon="search" 
-                        placeholder="Search ship..." 
+                        placeholder={t('searchShipPlaceholder')}
                         value={search}
                         onChange={(e) => this.setState({ search: e.target.value })}
                         fill={true}
@@ -108,7 +111,7 @@ export default class ShipList extends Component {
                         intent={filterMarked ? "primary" : "none"}
                         onClick={() => this.setState({ filterMarked: !filterMarked })}
                     >
-                        Marked Only
+                        {t('markedOnly')}
                     </Button>
                 </div>
 
@@ -135,18 +138,19 @@ export default class ShipList extends Component {
                                             <div style={{ display: 'flex', flexDirection: 'column' }}>
                                                 <span style={{ fontWeight: '600' }}>{item.equipName}</span>
                                                 <span className="bp3-text-muted" style={{ fontSize: '0.85em' }}>
-                                                     {item.isInitial ? 'Initial' : 'via ' + item.providerName}
+                                                     {item.isInitial ? t('initialLabel') : t('viaProvider', { name: item.providerName })}
                                                 </span>
                                             </div>
-                                            {item.isInitial && <Tag minimal={true} intent="success" style={{marginRight: 5}}>Init</Tag>}
-                                            <Tag minimal={true} className={item.isTarget ? "bp3-intent-primary" : ""}>Lv.{item.level}</Tag>
+                                            {item.isInitial && <Tag minimal={true} intent="success" style={{marginRight: 5}}>{t('initTag')}</Tag>}
+                                            <Tag minimal={true} className={item.isTarget ? "bp3-intent-primary" : ""}>{t('levelPrefix')}{item.level}</Tag>
                                         </div>
                                     ))}
                                 </div>
                             </div>
                         </Card>
                     ))}
-                    {ships.length === 0 && <div className="bp3-text-muted" style={{ textAlign: 'center', marginTop: 20 }}>No ships found.</div>}
+                    {noDataAtAll && <div className="bp3-text-muted" style={{ textAlign: 'center', marginTop: 20 }}>{t('noDataTitle')}</div>}
+                    {!noDataAtAll && ships.length === 0 && <div className="bp3-text-muted" style={{ textAlign: 'center', marginTop: 20 }}>{t('noShipsFound')}</div>}
                 </div>
             </div>
         )

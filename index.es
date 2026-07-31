@@ -1,6 +1,7 @@
 import { syncConfig } from './redux/actions'
 import { targetsSelector, wctfDataSelector, userEquipsSelector, userShipsSelector, masterShipsSelector, masterEquipmentsSelector } from './redux/selectors'
 import { getFarmingMap, checkQuota } from './lib/data-processor'
+import { t } from './views/i18n'
 
 // Export Redux Reducer
 export { reducer } from './redux'
@@ -43,49 +44,59 @@ const handleGameResponse = (e) => {
   } else if (path === '/kcsapi/api_start2/getData') {
       // Block 2: Save Master Data Cache
       if (isValidMasterCachePayload(body)) {
-          const { saveMasterCache } = require('./lib/master-cache')
-          saveMasterCache(body).catch((error) => {
-              console.error('[Farming Plugin] Error saving master cache', error)
-          })
+          try {
+              const { saveMasterCache } = require('./lib/master-cache')
+              saveMasterCache(body).catch((error) => {
+                  console.error('[Farming Plugin] Error saving master cache', error)
+              })
+          } catch (error) {
+              console.error('[Farming Plugin] Failed to initialize master cache', error)
+          }
       }
   }
 
   if (gotShipId > 0 && window.store) {
-      const state = window.store.getState()
-      const targets = targetsSelector(state)
-      const wctf = wctfDataSelector(state)
-      const userEquips = userEquipsSelector(state)
-      const userShips = userShipsSelector(state)
-      const $ships = masterShipsSelector(state)
-      const $equipments = masterEquipmentsSelector(state)
-      const farmingMap = getFarmingMap(wctf, $ships)
-      const shipInfo = farmingMap[gotShipId]
+      try {
+          const state = window.store.getState()
+          const targets = targetsSelector(state)
+          const wctf = wctfDataSelector(state)
+          const userEquips = userEquipsSelector(state)
+          const userShips = userShipsSelector(state)
+          const $ships = masterShipsSelector(state)
+          const $equipments = masterEquipmentsSelector(state)
+          const farmingMap = getFarmingMap(wctf, $ships)
+          const shipInfo = farmingMap[gotShipId]
 
-      if (shipInfo && shipInfo.provides) {
-          const hits = []
-          
-          shipInfo.provides.forEach(p => {
-              const targetCount = targets[p.equipId] || 0
-              if (targetCount > 0) {
-                  const quota = checkQuota(targetCount, p.equipId, userEquips, userShips, farmingMap)
+          if (shipInfo && shipInfo.provides) {
+              const hits = []
+              
+              shipInfo.provides.forEach(p => {
+                  const targetCount = targets[p.equipId] || 0
+                  if (targetCount > 0) {
+                      const quota = checkQuota(targetCount, p.equipId, userEquips, userShips, farmingMap)
+                      
+                      if (!quota.isSatisfied) {
+                           const equipMaster = $equipments[p.equipId]
+                           const eqName = equipMaster ? equipMaster.api_name : `#${p.equipId}`
+                           hits.push(`${eqName} (${t('levelPrefix')}${p.level})`)
+                      }
+                  }
+              })
+
+              if (hits.length > 0) {
+                  // Get ship name
+                  const shipMaster = $ships[gotShipId]
+                  const shipName = shipMaster ? shipMaster.api_name : `Ship#${gotShipId}`
                   
-                  if (!quota.isSatisfied) {
-                       const equipMaster = $equipments[p.equipId]
-                       const eqName = equipMaster ? equipMaster.api_name : `#${p.equipId}`
-                       hits.push(`${eqName} (Lv.${p.level})`)
+                  // Format: 🔒{ship}可获得{equip}⚙️
+                  const equipList = hits.join('、')
+                  if (typeof window.toast === 'function') {
+                      window.toast(t('toastGotShip', { shipName, equipList }), { type: 'success' })
                   }
               }
-          })
-
-          if (hits.length > 0) {
-              // Get ship name
-              const shipMaster = $ships[gotShipId]
-              const shipName = shipMaster ? shipMaster.api_name : `Ship#${gotShipId}`
-              
-              // Format: 🔒{ship}可获得{equip}⚙️
-              const equipList = hits.join('、')
-              window.toast(`🔒${shipName}可获得${equipList}⚙️`, { type: 'success' })
           }
+      } catch (error) {
+          console.error('[Farming Plugin] Error handling game response:', error)
       }
   }
 }

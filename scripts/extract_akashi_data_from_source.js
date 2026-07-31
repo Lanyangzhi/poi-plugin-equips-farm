@@ -54,8 +54,21 @@ function resolveDetailDir(inputPath) {
     return path.join(absolutePath, 'detail');
 }
 
-const sourceArg = process.argv[2];
-const outputArg = process.argv[3];
+// Positional args (order-independent): [sourceDir] [outputFile] [--min-count <n>]
+const args = process.argv.slice(2);
+let sourceArg, outputArg, minCount = 100;
+for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--min-count') {
+        minCount = parseInt(args[i + 1], 10);
+        i++;
+    } else if (!sourceArg) {
+        sourceArg = args[i];
+    } else if (!outputArg) {
+        outputArg = args[i];
+    }
+}
+if (Number.isNaN(minCount) || minCount < 0) minCount = 100;
+
 const akashiDetailDir = resolveDetailDir(sourceArg);
 const outputFile = outputArg ? path.resolve(outputArg) : DEFAULT_OUTPUT_FILE;
 
@@ -88,6 +101,15 @@ files.forEach(file => {
     }
 });
 
-console.log(`Extracted info for ${Object.keys(result).length} equipment IDs.`);
+const equipCount = Object.keys(result).length;
+console.log(`Extracted info for ${equipCount} equipment IDs.`);
+
+if (equipCount < minCount) {
+    console.error(`ERROR: extracted ${equipCount} equipment IDs, below the minimum of ${minCount}.`);
+    console.error('Aborting without writing the output file, to avoid publishing empty/broken data.');
+    console.error('The upstream Akashi HTML structure may have changed; check the parsing logic.');
+    process.exit(1);
+}
+
 fs.writeFileSync(outputFile, JSON.stringify(result, null, 2), 'utf-8');
 console.log(`Data saved to ${outputFile}`);

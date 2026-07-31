@@ -10,15 +10,22 @@ on:
   schedule:
     - cron: '17 3 * * *'
 
+# Serialize runs: concurrent executions (schedule + manual dispatch) would
+# both bump the patch version and produce duplicate npm versions.
+concurrency:
+  group: sync-akashi-data
+  cancel-in-progress: false
+
 jobs:
   sync-data:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      id-token: write
     env:
       DEFAULT_AKASHI_REPO: yukikuri/akashi-list
       AKASHI_HASH_FILE: .github/akashi-list.last-commit
+    outputs:
+      data_changed: ${{ steps.data_changes.outputs.changed }}
     steps:
       - name: Checkout plugin repository
         uses: actions/checkout@v4
@@ -28,7 +35,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Resolve Akashi repository
         id: akashi_repo
@@ -84,7 +91,10 @@ jobs:
 
       - name: Generate latest initial equipment data
         if: steps.upstream_changes.outputs.changed == 'true'
-        run: node scripts/extract_akashi_data_from_source.js ./akashi-list-gh-pages ./initial_equip_ships.json
+        # --min-count guards against upstream HTML format changes:
+        # if parsing yields too few entries, the script exits non-zero and
+        # the workflow stops instead of publishing empty/broken data.
+        run: node scripts/extract_akashi_data_from_source.js ./akashi-list-gh-pages ./initial_equip_ships.json --min-count 100
 
       - name: Detect data changes
         id: data_changes
@@ -115,43 +125,76 @@ jobs:
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Set dynamic version
+      - name: Bump patch version
         if: steps.upstream_changes.outputs.changed == 'true' && steps.data_changes.outputs.changed == 'true'
-        run: |
-          BASE_VERSION=$(node -p "require('./package.json').version")
-          TS=$(date +%Y%m%d%H%M%S)
-          NEW_VERSION="${BASE_VERSION}-auto.${TS}"
-          npm version $NEW_VERSION --no-git-tag-version
+        run: npm version patch --no-git-tag-version
 
-      - name: Commit updated data
+      - name: Commit updated data and tag
         if: steps.upstream_changes.outputs.changed == 'true' && steps.metadata_changes.outputs.changed == 'true'
+        shell: bash
         run: |
           VERSION="$(node -p "require('./package.json').version")"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           if [ "${{ steps.data_changes.outputs.changed }}" = "true" ]; then
-            git add initial_equip_ships.json "$AKASHI_HASH_FILE"
-            git commit -m "chore: sync Akashi data (${VERSION}) (${{ steps.latest_hash.outputs.value }})"
+            git add initial_equip_ships.json package.json "$AKASHI_HASH_FILE"
+            git commit -m "chore: sync Akashi data for v${VERSION} (${{ steps.latest_hash.outputs.value }})"
+            git tag "v${VERSION}"
           else
             git add "$AKASHI_HASH_FILE"
             git commit -m "chore: track Akashi upstream ${{ steps.latest_hash.outputs.value }}"
           fi
 
-      - name: Push commit
+      - name: Push commit and tag
         if: steps.upstream_changes.outputs.changed == 'true' && steps.metadata_changes.outputs.changed == 'true'
-        run: git push
+        shell: bash
+        run: |
+          git push
+          if [ "${{ steps.data_changes.outputs.changed }}" = "true" ]; then
+            git push origin "v$(node -p "require('./package.json').version")"
+          fi
 
-      - name: Publish to npm
-        if: steps.upstream_changes.outputs.changed == 'true' && steps.data_changes.outputs.changed == 'true'
+  publish:
+    # Publishing stays in the same workflow (job dependency) because a push
+    # made with the default GITHUB_TOKEN does NOT trigger other workflows,
+    # so tag-based cross-workflow triggering would never fire.
+    needs: sync-data
+    if: needs.sync-data.outputs.data_changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          # Keep in sync with the npm major below: npm@12 requires
+          # node ^22.22.2 || ^24.15.0 || >=26.0.0 (node 24 LTS satisfies it).
+          node-version: 24
           registry-url: https://registry.npmjs.org/
-      - run: node --version
-      - run: npm install -g npm@latest
-      - run: npm --version
+
+      - name: Pin npm major version
+        # Do NOT use npm@latest: rolling majors keep raising their engine
+        # requirements (npm@12 needs node >= 22.22.2) and break the runner.
+        # npm@12 is pinned forever; the registry keeps all historical
+        # versions and OIDC/provenance (npm >= 9.7) support is stable.
+        run: npm install -g npm@12
+
+      - name: Check Node.js and npm versions
+        run: |
+          node --version
+          npm --version
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
 
       - name: npm publish
-        if: steps.upstream_changes.outputs.changed == 'true' && steps.data_changes.outputs.changed == 'true'
+        # OIDC trusted publishing (no NPM_TOKEN required):
+        # setup-node writes the registry auth via the ambient OIDC token.
         run: npm publish --provenance --access public

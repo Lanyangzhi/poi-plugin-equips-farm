@@ -1,38 +1,8 @@
-# This workflow will run tests using node and then publish a package to GitHub Packages when a release is created
-# For more information see: https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages
-
-# name: Node.js Package
-
-# on:
-#   release:
-#     types: [created]
-
-# jobs:
-#   build:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - uses: actions/checkout@v4
-#       - uses: actions/setup-node@v4
-#         with:
-#           node-version: 20
-#       - run: npm ci
-#       - run: npm test
-
-#   publish-npm:
-#     needs: build
-#     runs-on: ubuntu-latest
-#     steps:
-#       - uses: actions/checkout@v4
-#       - uses: actions/setup-node@v4
-#         with:
-#           node-version: 20
-#           registry-url: https://registry.npmjs.org/
-#       - run: npm ci
-#       - run: npm publish
-#         env:
-#           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
-
-
+# Manual / fallback publish workflow.
+# Automatic releases happen inside sync-akashi-data.yml (job `publish`),
+# because pushes made with the default GITHUB_TOKEN do not trigger other
+# workflows. This one can be used to publish the current master version
+# manually (workflow_dispatch) or if a tag is pushed by other means.
 
 name: Publish poi-plugin to npm
 
@@ -50,12 +20,28 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          registry-url: https://registry.npmjs.org/
-      - run: node --version
-      - run: npm install -g npm@latest
-      - run: npm --version
-      - run: npm publish --access public
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          # Keep in sync with the npm major below: npm@12 requires
+          # node ^22.22.2 || ^24.15.0 || >=26.0.0 (node 24 LTS satisfies it).
+          node-version: 24
+          registry-url: https://registry.npmjs.org/
+
+      - name: Pin npm major version
+        run: npm install -g npm@12
+
+      - name: Check Node.js and npm versions
+        run: |
+          node --version
+          npm --version
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+
+      - name: npm publish
+        run: npm publish --provenance --access public

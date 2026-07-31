@@ -3,10 +3,13 @@ import { connect } from 'react-redux'
 import { Tab, Tabs } from '@blueprintjs/core'
 import { addTarget, removeTarget } from '../redux/actions'
 import { targetsSelector, masterShipsSelector, masterEquipmentsSelector, masterShipTypesSelector, masterEquipTypesSelector, wctfDataSelector, userEquipsSelector, userShipsSelector, constSelector } from '../redux/selectors'
-import { getFarmingMap } from '../lib/data-processor'
+import { getFarmingMap, getFarmingMapStats, invalidateFarmingMapCache } from '../lib/data-processor'
+import { t } from './i18n'
 
 import EquipmentList from './components/EquipmentList'
 import ShipList from './components/ShipList'
+
+const EMPTY_OBJ = {}
 
 // Main UI
 class FarmingAssistant extends Component {
@@ -14,6 +17,7 @@ class FarmingAssistant extends Component {
     super(props)
     this.state = {
       activeTab: 'equipment',
+      reloadTick: 0,
     }
 
     this.cachedEquipmentList = null
@@ -24,14 +28,23 @@ class FarmingAssistant extends Component {
       this.setState({ activeTab: newTabId })
   }
 
+  handleReload = () => {
+      // Force a full rebuild: drop the module-level farming map cache,
+      // the in-memory equipment list cache, and re-render.
+      invalidateFarmingMapCache()
+      this.cachedEquipmentList = null
+      this.cachedEquipmentListInputs = null
+      this.setState(prev => ({ reloadTick: prev.reloadTick + 1 }))
+  }
+
   getEquipmentList(farmingMap, $ships, $equipments, $equipTypes, wctf) {
-    const wctfItems = (wctf && wctf.items) || {}
+    const wctfItems = (wctf && wctf.items) || EMPTY_OBJ
     const cacheInputs = {
       farmingMap,
       $ships,
       $equipments,
       $equipTypes,
-      wctfItems,
+      wctf,
     }
 
     if (
@@ -41,7 +54,7 @@ class FarmingAssistant extends Component {
       this.cachedEquipmentListInputs.$ships === cacheInputs.$ships &&
       this.cachedEquipmentListInputs.$equipments === cacheInputs.$equipments &&
       this.cachedEquipmentListInputs.$equipTypes === cacheInputs.$equipTypes &&
-      this.cachedEquipmentListInputs.wctfItems === cacheInputs.wctfItems
+      this.cachedEquipmentListInputs.wctf === cacheInputs.wctf
     ) {
       return this.cachedEquipmentList
     }
@@ -74,7 +87,7 @@ class FarmingAssistant extends Component {
             filename: wctfItem.filename,
             wiki_id: wctfItem.wiki_id,
             iconId: (masterEquip.api_type && masterEquip.api_type[3]) || 0,
-            typeName: ($equipTypes[typeId] || {}).api_name || 'Unknown',
+            typeName: ($equipTypes[typeId] || {}).api_name || t('typeOthers'),
             typeId,
             ships: []
           }
@@ -119,10 +132,11 @@ class FarmingAssistant extends Component {
         userShips
     } = this.props
     
-    // 1. Generate Farming Map from WCTF (Consolidated by Base ID)
+    // 1. Generate Farming Map from all available sources (WCTF + master data)
     const farmingMap = getFarmingMap(wctf, $ships)
     
     const equipmentList = this.getEquipmentList(farmingMap, $ships, $equipments, $equipTypes, wctf)
+    const stats = getFarmingMapStats()
 
     return (
       <div className="farming-assistant-root" style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '0 10px' }}>
@@ -154,7 +168,7 @@ class FarmingAssistant extends Component {
                 animate={true} 
                 renderActiveTabPanelOnly={true}
             >
-                        <Tab id="equipment" title="Equipments" panel={
+                        <Tab id="equipment" title={t('tabEquipments')} panel={
                             <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                                 <EquipmentList 
                                     equipments={equipmentList} 
@@ -167,10 +181,13 @@ class FarmingAssistant extends Component {
                                     $equipTypes={$equipTypes}
                                     $ships={$ships}
                                     wctf={wctf}
+                                    stats={stats}
+                                    onReload={this.handleReload}
+                                    reloadTick={this.state.reloadTick}
                                 />
                             </div>
                         } />
-                        <Tab id="ships" title="Ships" panel={
+                        <Tab id="ships" title={t('tabShips')} panel={
                             <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                                 <ShipList 
                                     equipmentList={equipmentList} 
