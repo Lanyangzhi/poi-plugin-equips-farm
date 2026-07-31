@@ -101,16 +101,20 @@ export function hiraganaToRomaji(hiragana) {
     while (i < hiragana.length) {
         // Try 2-character combinations first
         const twoChar = hiragana.substring(i, i + 2)
-        if (HIRAGANA_TO_ROMAJI[twoChar]) {
-            result += HIRAGANA_TO_ROMAJI[twoChar]
+        const twoMapped = HIRAGANA_TO_ROMAJI[twoChar]
+        if (twoMapped !== undefined) {
+            result += twoMapped
             i += 2
             continue
         }
         
         // Try single character
+        // NOTE: mapped values may be '' (small tsu, long vowel mark),
+        // which is falsy - must check for undefined instead.
         const oneChar = hiragana[i]
-        if (HIRAGANA_TO_ROMAJI[oneChar]) {
-            result += HIRAGANA_TO_ROMAJI[oneChar]
+        const mapped = HIRAGANA_TO_ROMAJI[oneChar]
+        if (mapped !== undefined) {
+            result += mapped
         } else {
             result += oneChar  // Keep as-is if not found
         }

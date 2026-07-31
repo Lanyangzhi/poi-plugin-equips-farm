@@ -4,6 +4,7 @@ import { Avatar } from 'views/components/etc/avatar'
 import { SlotitemIcon } from 'views/components/etc/icon'
 import { checkQuota } from '../../lib/data-processor'
 import { matchesSearch } from '../../lib/search-utils'
+import { t } from '../i18n'
 
 // Robust Control for Redux-bound Inputs
 const TargetControl = ({ id, count, onUpdate }) => {
@@ -44,6 +45,39 @@ const TargetControl = ({ id, count, onUpdate }) => {
     )
 }
 
+// Troubleshooting panel shown when the equipment list is empty because no
+// data source is available. Each source state is derived from the stats of
+// the last farming-map build (see lib/data-processor.es).
+const DataSourceStatusPanel = ({ stats, onReload }) => {
+    if (!stats) return null
+    const sourceStatus = (countKey) => {
+        const count = stats[countKey] || 0
+        return count > 0 ? t('statusLoaded', { count }) : t('statusEmpty')
+    }
+    const row = (label, value) => (
+        <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+            <span>{label}</span>
+            <span className={String(value).indexOf('(') > 0 ? 'bp3-text-success' : 'bp3-text-muted'}>{value}</span>
+        </div>
+    )
+
+    return (
+        <div className="data-source-panel" style={{ marginTop: 20, padding: 16, border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, maxWidth: 420 }}>
+            <div style={{ fontWeight: 'bold', marginBottom: 8 }}>{t('dataSource')}</div>
+            {row(t('wctfLabel'), sourceStatus('wctfShips'))}
+            {row(t('masterDataLabel'), sourceStatus('masterShips'))}
+            {row(t('masterCacheLabel'), sourceStatus('cacheShips'))}
+            {row(t('bundledDataLabel'), sourceStatus('initialEquipIds'))}
+            <div className="bp3-text-muted" style={{ fontSize: '0.85em', marginTop: 10, lineHeight: 1.5 }}>
+                {t('diagnosticHint')}
+            </div>
+            <Button intent="primary" onClick={onReload} style={{ marginTop: 12 }}>
+                {t('retryButton')}
+            </Button>
+        </div>
+    )
+}
+
 export default class EquipmentList extends Component {
     constructor(props) {
         super(props)
@@ -71,10 +105,14 @@ export default class EquipmentList extends Component {
         })
     }
 
+    clearAllFilters = () => {
+        this.setState({ filterType: 'All', search: '', selectedTypeIds: new Set() })
+    }
+
     render() {
         // Props contain full equip list + master data
-        const { equipments, targets, onAdd, onRemove, userEquips, userShips, farmingMap, $equipTypes, $ships } = this.props
-        const { filterType, search, expandedId } = this.state
+        const { equipments, targets, onAdd, onRemove, userEquips, userShips, farmingMap, $equipTypes, $ships, stats, onReload } = this.props
+        const { filterType, search, expandedId, selectedTypeIds } = this.state
         const quotaMap = {}
 
         Object.keys(targets).forEach(equipId => {
@@ -102,7 +140,7 @@ export default class EquipmentList extends Component {
                 const typeInfo = $equipTypes[tId]
                 availableTypesMap[tId] = {
                     id: tId,
-                    name: typeInfo ? typeInfo.api_name : 'Others',
+                    name: typeInfo ? typeInfo.api_name : t('typeOthers'),
                     iconId: eq.iconId 
                 }
             }
@@ -110,7 +148,6 @@ export default class EquipmentList extends Component {
         const availableTypes = Object.values(availableTypesMap).sort((a,b) => a.id - b.id)
 
         // 3. Apply Type Filter
-        const { selectedTypeIds } = this.state
         if (selectedTypeIds.size > 0) {
             filtered = filtered.filter(eq => selectedTypeIds.has(eq.typeId || 999))
         }
@@ -125,6 +162,13 @@ export default class EquipmentList extends Component {
 
         const sortedTypeIds = Object.keys(groups).sort((a,b) => parseInt(a) - parseInt(b))
 
+        // Empty-state distinction:
+        //  - no equipment at all -> data sources not ready (show diagnostics)
+        //  - equipment exists but filters match nothing -> show clear-filter action
+        const noDataAtAll = equipments.length === 0
+        const noMatchesAfterFilter = !noDataAtAll && sortedTypeIds.length === 0
+        const hasActiveFilters = search !== '' || filterType !== 'All' || selectedTypeIds.size > 0
+
         return (
             <div className="equipment-list-container" style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
                 {/* Top Controls */}
@@ -132,15 +176,15 @@ export default class EquipmentList extends Component {
                     <div style={{ display: 'flex', marginBottom: 10 }}>
                         <InputGroup 
                             leftIcon="search" 
-                            placeholder="Search equipment..." 
+                            placeholder={t('searchEquipPlaceholder')}
                             value={search}
                             onChange={(e) => this.setState({ search: e.target.value })}
                             style={{ flex: 1, marginRight: 10 }}
                         />
                         <div className="bp3-button-group">
-                            <Button active={filterType === 'All'} onClick={() => this.setState({ filterType: 'All' })} className="bp3-small">All</Button>
-                            <Button active={filterType === 'Marked'} intent={filterType === 'Marked' ? "primary" : "none"} onClick={() => this.setState({ filterType: 'Marked' })} className="bp3-small">Marked</Button>
-                            <Button active={filterType === 'Unmarked'} onClick={() => this.setState({ filterType: 'Unmarked' })} className="bp3-small">Unmarked</Button>
+                            <Button active={filterType === 'All'} onClick={() => this.setState({ filterType: 'All' })} className="bp3-small">{t('filterAll')}</Button>
+                            <Button active={filterType === 'Marked'} intent={filterType === 'Marked' ? "primary" : "none"} onClick={() => this.setState({ filterType: 'Marked' })} className="bp3-small">{t('filterMarked')}</Button>
+                            <Button active={filterType === 'Unmarked'} onClick={() => this.setState({ filterType: 'Unmarked' })} className="bp3-small">{t('filterUnmarked')}</Button>
                         </div>
                     </div>
 
@@ -191,8 +235,13 @@ export default class EquipmentList extends Component {
                                 </div>
                             )
                         })}
-                        {availableTypes.length === 0 && <span className="bp3-text-muted">Loading types...</span>}
+                        {availableTypes.length === 0 && <span className="bp3-text-muted">{t('loadingTypes')}</span>}
                     </div>
+                    {selectedTypeIds.size > 0 && (
+                        <Button minimal small onClick={() => this.setState({ selectedTypeIds: new Set() })} style={{ marginBottom: 6 }}>
+                            {t('clearTypeFiltersButton')}
+                        </Button>
+                    )}
                 </div>
 
                 {/* List Content */}
@@ -292,7 +341,7 @@ export default class EquipmentList extends Component {
                                                                     <Avatar mstId={s.providerId} height={20} style={{ marginRight: 5 }} />
                                                                     <div style={{ fontSize: '0.9em' }}>
                                                                         <span>{s.providerName}</span>
-                                                                        <Tag minimal={true} style={{ marginLeft: 5 }}>Lv.{s.level}</Tag>
+                                                                        <Tag minimal={true} style={{ marginLeft: 5 }}>{t('levelPrefix')}{s.level}</Tag>
                                                                     </div>
                                                                 </div>
                                                             )
@@ -306,7 +355,26 @@ export default class EquipmentList extends Component {
                             </div>
                         )
                     })}
-                    {sortedTypeIds.length === 0 && <div className="bp3-text-muted" style={{ textAlign: 'center', marginTop: 20 }}>No items match filter.</div>}
+
+                    {noDataAtAll && (
+                        <div className="bp3-text-muted" style={{ textAlign: 'center', marginTop: 20 }}>
+                            <div style={{ fontSize: '1.1em', marginBottom: 6 }}>{t('noDataTitle')}</div>
+                            <div style={{ maxWidth: 480, margin: '0 auto', fontSize: '0.9em', lineHeight: 1.5 }}>{t('noDataDesc')}</div>
+                            <DataSourceStatusPanel stats={stats} onReload={onReload} />
+                        </div>
+                    )}
+
+                    {noMatchesAfterFilter && (
+                        <div className="bp3-text-muted" style={{ textAlign: 'center', marginTop: 20 }}>
+                            <div style={{ fontSize: '1.1em', marginBottom: 6 }}>{t('noItemsMatchFilter')}</div>
+                            <div style={{ maxWidth: 480, margin: '0 auto', fontSize: '0.9em', lineHeight: 1.5 }}>{t('noMatchDesc')}</div>
+                            {hasActiveFilters && (
+                                <Button intent="primary" onClick={this.clearAllFilters} style={{ marginTop: 12 }}>
+                                    {t('clearFiltersButton')}
+                                </Button>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         )
