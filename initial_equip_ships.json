@@ -1091,6 +1091,10 @@
       "level": 1
     },
     {
+      "name": "花月",
+      "level": 1
+    },
+    {
       "name": "水無月改",
       "level": 20
     },
@@ -1781,6 +1785,10 @@
       "level": 52
     },
     {
+      "name": "日枝丸改",
+      "level": 55
+    },
+    {
       "name": "潮改二",
       "level": 60
     },
@@ -1824,6 +1832,10 @@
     },
     {
       "name": "冬月",
+      "level": 1
+    },
+    {
+      "name": "花月",
       "level": 1
     },
     {
@@ -1916,6 +1928,10 @@
     },
     {
       "name": "冬月改",
+      "level": 55
+    },
+    {
+      "name": "花月改",
       "level": 55
     },
     {
@@ -2381,6 +2397,10 @@
     {
       "name": "平安丸改",
       "level": 25
+    },
+    {
+      "name": "日枝丸改",
+      "level": 55
     }
   ],
   "49": [
@@ -2431,6 +2451,10 @@
     {
       "name": "松改",
       "level": 50
+    },
+    {
+      "name": "桐改",
+      "level": 53
     },
     {
       "name": "大泊改",
@@ -3301,11 +3325,19 @@
       "level": 52
     },
     {
+      "name": "桐改",
+      "level": 53
+    },
+    {
       "name": "涼月改",
       "level": 55
     },
     {
       "name": "冬月改",
+      "level": 55
+    },
+    {
+      "name": "花月改",
       "level": 55
     },
     {
@@ -3527,6 +3559,10 @@
       "level": 1
     },
     {
+      "name": "花月",
+      "level": 1
+    },
+    {
       "name": "秋月改",
       "level": 40
     },
@@ -3544,6 +3580,10 @@
     },
     {
       "name": "冬月改",
+      "level": 55
+    },
+    {
+      "name": "花月改",
       "level": 55
     },
     {
@@ -3787,6 +3827,10 @@
     {
       "name": "速吸改",
       "level": 25
+    },
+    {
+      "name": "日枝丸改",
+      "level": 55
     }
   ],
   "147": [
@@ -3896,6 +3940,10 @@
   "171": [
     {
       "name": "Massachusetts改",
+      "level": 48
+    },
+    {
+      "name": "Indiana改",
       "level": 48
     },
     {
@@ -4083,6 +4131,10 @@
       "level": 1
     },
     {
+      "name": "Independence",
+      "level": 1
+    },
+    {
       "name": "Saratoga改",
       "level": 40
     },
@@ -4103,6 +4155,10 @@
     {
       "name": "Langley改",
       "level": 50
+    },
+    {
+      "name": "Independence改",
+      "level": 50
     }
   ],
   "211": [
@@ -4112,6 +4168,10 @@
     }
   ],
   "226": [
+    {
+      "name": "日枝丸",
+      "level": 1
+    },
     {
       "name": "白露改",
       "level": 20
@@ -4263,6 +4323,10 @@
       "level": 1
     },
     {
+      "name": "桐",
+      "level": 1
+    },
+    {
       "name": "鬼怒改",
       "level": 17
     },
@@ -4313,6 +4377,10 @@
     {
       "name": "竹改",
       "level": 51
+    },
+    {
+      "name": "桐改",
+      "level": 53
     },
     {
       "name": "阿武隈改二",
@@ -4450,6 +4518,10 @@
     },
     {
       "name": "Langley改",
+      "level": 50
+    },
+    {
+      "name": "Independence改",
       "level": 50
     },
     {
@@ -4865,6 +4937,10 @@
       "level": 48
     },
     {
+      "name": "Indiana改",
+      "level": 48
+    },
+    {
       "name": "Johnston改",
       "level": 55
     },
@@ -5041,7 +5117,15 @@
       "level": 1
     },
     {
+      "name": "Reno",
+      "level": 1
+    },
+    {
       "name": "Atlanta改",
+      "level": 50
+    },
+    {
+      "name": "Reno改",
       "level": 50
     }
   ],
@@ -5068,6 +5152,10 @@
     },
     {
       "name": "Massachusetts",
+      "level": 1
+    },
+    {
+      "name": "Indiana",
       "level": 1
     }
   ],
@@ -5193,6 +5281,10 @@
     {
       "name": "Massachusetts改",
       "level": 48
+    },
+    {
+      "name": "Indiana改",
+      "level": 48
     }
   ],
   "386": [
@@ -5296,6 +5388,10 @@
     },
     {
       "name": "Wasp",
+      "level": 1
+    },
+    {
+      "name": "Independence",
       "level": 1
     },
     {
@@ -5563,6 +5659,26 @@
     {
       "name": "吹雪改三護(六式)",
       "level": 95
+    }
+  ],
+  "579": [
+    {
+      "name": "Vautour",
+      "level": 1
+    },
+    {
+      "name": "Vautour改",
+      "level": 30
+    }
+  ],
+  "580": [
+    {
+      "name": "Vautour",
+      "level": 1
+    },
+    {
+      "name": "Vautour改",
+      "level": 30
     }
   ]
 }
