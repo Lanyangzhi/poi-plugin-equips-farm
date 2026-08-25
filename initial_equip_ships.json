@@ -5457,6 +5457,10 @@
       "level": 45
     },
     {
+      "name": "Algérie改",
+      "level": 50
+    },
+    {
       "name": "Gloire改",
       "level": 52
     }
@@ -5677,8 +5681,38 @@
       "level": 1
     },
     {
+      "name": "Algérie",
+      "level": 1
+    },
+    {
       "name": "Vautour改",
       "level": 30
+    },
+    {
+      "name": "Algérie改",
+      "level": 50
+    }
+  ],
+  "582": [
+    {
+      "name": "Algérie",
+      "level": 1
+    }
+  ],
+  "583": [
+    {
+      "name": "Algérie改",
+      "level": 50
+    }
+  ],
+  "584": [
+    {
+      "name": "Visby",
+      "level": 1
+    },
+    {
+      "name": "Visby改",
+      "level": 50
     }
   ]
 }
