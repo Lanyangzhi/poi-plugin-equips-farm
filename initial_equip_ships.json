@@ -5714,5 +5714,35 @@
       "name": "Visby改",
       "level": 50
     }
+  ],
+  "585": [
+    {
+      "name": "Béarn",
+      "level": 1
+    },
+    {
+      "name": "Béarn改",
+      "level": 40
+    }
+  ],
+  "586": [
+    {
+      "name": "Béarn",
+      "level": 1
+    },
+    {
+      "name": "Béarn改",
+      "level": 40
+    }
+  ],
+  "587": [
+    {
+      "name": "Béarn改",
+      "level": 40
+    },
+    {
+      "name": "Béarn amélioration",
+      "level": 75
+    }
   ]
 }
