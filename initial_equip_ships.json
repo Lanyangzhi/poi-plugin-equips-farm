@@ -291,6 +291,14 @@
     {
       "name": "陸奥改二",
       "level": 89
+    },
+    {
+      "name": "扶桑改二補",
+      "level": 92
+    },
+    {
+      "name": "山城改二補",
+      "level": 92
     }
   ],
   "9": [
@@ -973,6 +981,10 @@
       "level": 1
     },
     {
+      "name": "蒼龍",
+      "level": 1
+    },
+    {
       "name": "飛龍",
       "level": 1
     },
@@ -1175,7 +1187,7 @@
       "level": 60
     },
     {
-      "name": "木曽改二",
+      "name": "木曾改二",
       "level": 65
     },
     {
@@ -1265,7 +1277,7 @@
       "level": 50
     },
     {
-      "name": "五十鈴改",
+      "name": "五十鈴改二",
       "level": 50
     },
     {
@@ -1457,6 +1469,12 @@
     {
       "name": "野埼改",
       "level": 60
+    }
+  ],
+  "38": [
+    {
+      "name": "大泊改",
+      "level": 55
     }
   ],
   "39": [
@@ -1714,7 +1732,7 @@
     },
     {
       "name": "倉橋改",
-      "level": 35
+      "level": 45
     },
     {
       "name": "明石改",
@@ -1769,11 +1787,11 @@
       "level": 50
     },
     {
-      "name": "千歳改二",
+      "name": "千歳航改二",
       "level": 50
     },
     {
-      "name": "千代田改二",
+      "name": "千代田航改二",
       "level": 50
     },
     {
@@ -2406,7 +2424,7 @@
   "49": [
     {
       "name": "宗谷",
-      "level": 1
+      "level": 60
     },
     {
       "name": "敷波改",
@@ -2565,7 +2583,7 @@
       "level": 50
     },
     {
-      "name": "木曽改二",
+      "name": "木曾改二",
       "level": 65
     }
   ],
@@ -2977,6 +2995,14 @@
     {
       "name": "山城改二",
       "level": 80
+    },
+    {
+      "name": "扶桑改二補",
+      "level": 92
+    },
+    {
+      "name": "山城改二補",
+      "level": 92
     }
   ],
   "82": [
@@ -3285,6 +3311,14 @@
     {
       "name": "日向改二",
       "level": 90
+    },
+    {
+      "name": "扶桑改二補",
+      "level": 92
+    },
+    {
+      "name": "山城改二補",
+      "level": 92
     }
   ],
   "106": [
@@ -3377,11 +3411,11 @@
       "level": 75
     },
     {
-      "name": "文月改二",
-      "level": 77
+      "name": "夕雲改二",
+      "level": 75
     },
     {
-      "name": "夕雲改二",
+      "name": "文月改二",
       "level": 77
     },
     {
@@ -3859,7 +3893,7 @@
       "level": 30
     },
     {
-      "name": "Maestrale",
+      "name": "Maestrale改",
       "level": 35
     },
     {
@@ -4073,6 +4107,12 @@
       "level": 75
     }
   ],
+  "193": [
+    {
+      "name": "扶桑改二補",
+      "level": 92
+    }
+  ],
   "194": [
     {
       "name": "Commandant Teste",
@@ -4127,11 +4167,11 @@
   ],
   "198": [
     {
-      "name": "Wasp",
+      "name": "Independence",
       "level": 1
     },
     {
-      "name": "Independence",
+      "name": "Wasp",
       "level": 1
     },
     {
@@ -4499,6 +4539,12 @@
       "level": 45
     }
   ],
+  "254": [
+    {
+      "name": "Gambier Bay Mk.II",
+      "level": 73
+    }
+  ],
   "256": [
     {
       "name": "Langley",
@@ -4529,10 +4575,26 @@
       "level": 55
     }
   ],
+  "258": [
+    {
+      "name": "Gambier Bay Mk.II",
+      "level": 73
+    }
+  ],
   "260": [
     {
       "name": "Jervis改",
       "level": 45
+    }
+  ],
+  "261": [
+    {
+      "name": "Javelin改",
+      "level": 50
+    },
+    {
+      "name": "Janus改",
+      "level": 55
     }
   ],
   "266": [
@@ -4651,10 +4713,60 @@
       "level": 89
     }
   ],
+  "277": [
+    {
+      "name": "Gambier Bay",
+      "level": 1
+    },
+    {
+      "name": "Gambier Bay改",
+      "level": 45
+    },
+    {
+      "name": "Gambier Bay Mk.II",
+      "level": 73
+    }
+  ],
   "278": [
     {
       "name": "Gambier Bay Mk.II",
       "level": 73
+    }
+  ],
+  "280": [
+    {
+      "name": "Jervis",
+      "level": 1
+    },
+    {
+      "name": "Janus",
+      "level": 1
+    },
+    {
+      "name": "Javelin",
+      "level": 1
+    },
+    {
+      "name": "Jervis改",
+      "level": 45
+    },
+    {
+      "name": "Javelin改",
+      "level": 50
+    },
+    {
+      "name": "Janus改",
+      "level": 55
+    }
+  ],
+  "282": [
+    {
+      "name": "Ташкент",
+      "level": 1
+    },
+    {
+      "name": "Ташкент改",
+      "level": 50
     }
   ],
   "283": [
@@ -4689,11 +4801,11 @@
       "level": 1
     },
     {
-      "name": "Samuel B.R",
+      "name": "Samuel B.Roberts",
       "level": 1
     },
     {
-      "name": "Samuel B.R改",
+      "name": "Samuel B.Roberts改",
       "level": 50
     }
   ],
@@ -4861,6 +4973,12 @@
       "level": 85
     }
   ],
+  "305": [
+    {
+      "name": "神鷹改二",
+      "level": 85
+    }
+  ],
   "310": [
     {
       "name": "日進甲",
@@ -4885,7 +5003,7 @@
       "level": 55
     },
     {
-      "name": "Samuel B.R Mk.II",
+      "name": "Samuel B.Roberts Mk.II",
       "level": 78
     },
     {
@@ -5085,7 +5203,7 @@
       "level": 50
     },
     {
-      "name": "<div class=overlay>★+2</div>Minneapolis改",
+      "name": "Minneapolis改",
       "level": 50
     }
   ],
@@ -5463,6 +5581,12 @@
     {
       "name": "Gloire改",
       "level": 52
+    }
+  ],
+  "488": [
+    {
+      "name": "山城改二補",
+      "level": 92
     }
   ],
   "497": [
